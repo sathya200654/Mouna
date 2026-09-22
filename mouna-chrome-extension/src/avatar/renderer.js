@@ -1,22 +1,23 @@
 /**
  * Mouna - Three.js WebGL Scene Renderer
- * Initializes camera, lights, tone mapping, and render loop matching Mouna's mobile configuration.
+ * Initializes camera, lights, tone mapping, and continuous render loop matching Mouna's mobile configuration.
  */
 
 class AvatarRenderer {
   /**
    * @param {HTMLCanvasElement} canvas 
-   * @param {HTMLElement} container 
+   * @param {HTMLElement} [container] 
    */
-  constructor(canvas, container) {
+  constructor(canvas, container = null) {
     this.canvas = canvas;
-    this.container = container;
+    this.container = container || (canvas ? canvas.parentElement : null);
     this.scene = null;
     this.camera = null;
     this.renderer = null;
     this.clock = null;
     this.isRunning = false;
     this.animationId = null;
+    this.onUpdate = null;
 
     // Updatables (mixers, controllers)
     this.updatables = [];
@@ -25,12 +26,14 @@ class AvatarRenderer {
   }
 
   init() {
+    if (this.scene) return; // already initialized
+
     // 1. Scene
     this.scene = new THREE.Scene();
 
     // 2. Camera matching Mouna's exact parameters
-    const width = this.container ? (this.container.clientWidth || 320) : 320;
-    const height = this.container ? (this.container.clientHeight || 450) : 450;
+    const width = this.container ? (this.container.clientWidth || 320) : (this.canvas ? this.canvas.clientWidth || 320 : 320);
+    const height = this.container ? (this.container.clientHeight || 450) : (this.canvas ? this.canvas.clientHeight || 450 : 450);
     const aspect = width / height;
 
     this.camera = new THREE.PerspectiveCamera(50, aspect, 1, 1000);
@@ -57,11 +60,11 @@ class AvatarRenderer {
     directionalLight.position.set(0.5, 0, 0.866);
     this.scene.add(directionalLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
 
     // Subtle rim light for avatar silhouette clarity
-    const rimLight = new THREE.PointLight(0x7986cb, 0.6);
+    const rimLight = new THREE.PointLight(0x7986cb, 0.8);
     rimLight.position.set(0, 15, -5);
     this.scene.add(rimLight);
 
@@ -74,6 +77,21 @@ class AvatarRenderer {
       this.resizeObserver = new ResizeObserver(() => this.onResize());
       this.resizeObserver.observe(this.container);
     }
+
+    // Automatically start the animation loop
+    this.start();
+  }
+
+  getScene() {
+    return this.scene;
+  }
+
+  getCamera() {
+    return this.camera;
+  }
+
+  getRenderer() {
+    return this.renderer;
   }
 
   addUpdatable(obj) {
@@ -90,9 +108,9 @@ class AvatarRenderer {
   }
 
   onResize() {
-    if (!this.container || !this.renderer || !this.camera) return;
-    const width = this.container.clientWidth || 320;
-    const height = this.container.clientHeight || 450;
+    if (!this.renderer || !this.camera) return;
+    const width = this.container ? (this.container.clientWidth || 320) : (this.canvas ? this.canvas.clientWidth || 320 : 320);
+    const height = this.container ? (this.container.clientHeight || 450) : (this.canvas ? this.canvas.clientHeight || 450 : 450);
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -118,7 +136,11 @@ class AvatarRenderer {
 
     this.animationId = requestAnimationFrame(() => this.animate());
 
-    const delta = this.clock.getDelta();
+    const delta = this.clock ? this.clock.getDelta() : 0.016;
+
+    if (this.onUpdate) {
+      this.onUpdate(delta);
+    }
 
     for (const item of this.updatables) {
       item.update(delta);

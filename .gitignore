@@ -26,3 +26,5 @@ current_screen*.png
 .DS_Store
 Thumbs.db
 node_modules/
+chrome-test-profile/
+
