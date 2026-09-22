@@ -14,6 +14,40 @@ const DEFAULT_STATE = {
   signingStatus: 'idle' // 'idle' | 'listening' | 'signing' | 'error'
 };
 
+// Auto-inject content scripts into existing active tabs on installation/reload
+async function injectContentScriptsIntoExistingTabs() {
+  try {
+    const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
+    const scripts = [
+      'lib/three.min.js',
+      'lib/meshopt_decoder.js',
+      'lib/GLTFLoader.js',
+      'src/sign/sign-processor.js',
+      'src/sign/sign-mapper.js',
+      'src/sign/animation-queue.js',
+      'src/avatar/renderer.js',
+      'src/avatar/avatar-loader.js',
+      'src/avatar/animation-controller.js',
+      'src/audio/audio-capture.js',
+      'src/speech/speech-recognizer.js',
+      'content/overlay.js',
+      'content/content.js'
+    ];
+    for (const tab of tabs) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: scripts
+        });
+      } catch (e) {
+        // Tab not accessible or discarded
+      }
+    }
+  } catch (err) {
+    console.warn('[Mouna Service Worker] Could not inject into existing tabs:', err);
+  }
+}
+
 // Initialize default state in storage upon installation
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('[Mouna Service Worker] Extension installed/updated:', details.reason);
@@ -21,6 +55,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   const merged = { ...DEFAULT_STATE, ...existing };
   await chrome.storage.local.set(merged);
   updateBadge(merged.isActive);
+  injectContentScriptsIntoExistingTabs();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  injectContentScriptsIntoExistingTabs();
 });
 
 // Update Chrome extension icon badge based on active status
@@ -91,8 +130,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (action === 'TRANSCRIPT_BROADCAST') {
-    // Content script detected speech, save latest snippet & notify popup if open
-    chrome.storage.local.set({ latestTranscript: payload.transcript || '' });
+    const text = (payload && payload.transcript) || '';
+    chrome.storage.local.set({ latestTranscript: text });
+
+    // Instantly notify popup or active extension views
+    try {
+      chrome.runtime.sendMessage({
+        action: 'TRANSCRIPT_UPDATE',
+        payload: { transcript: text, isFinal: payload ? payload.isFinal : true }
+      }).catch(() => {});
+    } catch (e) {}
+
+    // Also forward to tabs if sent from popup
+    broadcastToAllTabs({
+      action: 'TRANSCRIPT_UPDATE',
+      payload: { transcript: text, isFinal: payload ? payload.isFinal : true }
+    });
+
     sendResponse({ status: 'ok' });
     return false;
   }

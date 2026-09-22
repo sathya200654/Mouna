@@ -109,7 +109,7 @@
   }
 
   // Speech Recognition Callbacks
-  speechRecognizer.onTranscript = (transcript, isFinal) => {
+  const handleSpeechTranscript = (transcript, isFinal) => {
     overlay.setTranscript(transcript, isFinal);
 
     // Forward transcript update to storage/popup
@@ -120,7 +120,7 @@
       });
     } catch (e) {}
 
-    // Progressive real-time speech tokenization (Requirement 8)
+    // Progressive real-time speech tokenization
     const allWords = signProcessor.normalizeText(transcript);
 
     if (allWords.length > lastProcessedWordCount) {
@@ -140,8 +140,12 @@
     }
   };
 
-  speechRecognizer.onStateChange = (state) => {
-    if (state.isListening) {
+  speechRecognizer.onTranscript = handleSpeechTranscript;
+  speechRecognizer.onResult = (transcript, isFinal) => handleSpeechTranscript(transcript, isFinal);
+
+  const handleStateChange = (state) => {
+    const isListening = typeof state === 'boolean' ? state : (state && state.isListening);
+    if (isListening) {
       overlay.setStatus('listening', 'Listening');
     } else if (isActive) {
       overlay.setStatus('listening', 'Reconnecting Mic...');
@@ -149,6 +153,9 @@
       overlay.setStatus('idle', 'Standby');
     }
   };
+
+  speechRecognizer.onStateChange = handleStateChange;
+  speechRecognizer.onStatusChange = (isListening) => handleStateChange({ isListening });
 
   speechRecognizer.onError = (error) => {
     console.warn('[Mouna] Speech recognition warning:', error);
@@ -235,23 +242,44 @@
   let captionPollInterval = null;
   let lastCaptionText = '';
 
+  function enableYouTubeCaptions() {
+    if (!window.location.hostname.includes('youtube.com')) return;
+
+    // 1. YouTube Player Subtitles Button
+    const subBtn = document.querySelector('.ytp-subtitles-button');
+    if (subBtn && subBtn.getAttribute('aria-pressed') === 'false') {
+      console.log('[Mouna] Enabling YouTube subtitles for sign translation...');
+      subBtn.click();
+      return;
+    }
+
+    // 2. YouTube Movie Player API
+    const player = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
+    if (player && typeof player.isSubtitlesOn === 'function' && !player.isSubtitlesOn()) {
+      if (typeof player.toggleSubtitlesOn === 'function') {
+        player.toggleSubtitlesOn();
+      }
+    }
+  }
+
   function startVideoCaptionObserver() {
     if (captionObserver) return;
 
-    // If on YouTube, automatically ensure player captions are toggled on
-    if (window.location.hostname.includes('youtube.com')) {
-      const subBtn = document.querySelector('.ytp-subtitles-button');
-      if (subBtn && subBtn.getAttribute('aria-pressed') === 'false') {
-        console.log('[Mouna] Enabling YouTube automatic subtitles for sign translation...');
-        subBtn.click();
-      }
-    }
+    enableYouTubeCaptions();
 
     const checkCaptions = () => {
       if (!isActive) return;
 
+      // Re-check YouTube CC status
+      if (window.location.hostname.includes('youtube.com')) {
+        const subBtn = document.querySelector('.ytp-subtitles-button');
+        if (subBtn && subBtn.getAttribute('aria-pressed') === 'false') {
+          subBtn.click();
+        }
+      }
+
       // 1. YouTube Player Caption Segments
-      const ytSegments = document.querySelectorAll('.ytp-caption-segment');
+      const ytSegments = document.querySelectorAll('.ytp-caption-segment, .caption-visual-line, .ytp-caption-window-rollup');
       if (ytSegments && ytSegments.length > 0) {
         const fullCaption = Array.from(ytSegments).map(s => s.textContent.trim()).filter(Boolean).join(' ');
         if (fullCaption && fullCaption !== lastCaptionText) {
@@ -292,7 +320,7 @@
       characterData: true
     });
 
-    captionPollInterval = setInterval(checkCaptions, 350);
+    captionPollInterval = setInterval(checkCaptions, 120);
   }
 
   function stopVideoCaptionObserver() {
@@ -319,6 +347,20 @@
 
     signText(captionText);
   }
+
+  // Ensure video events re-trigger caption observer on YouTube SPA
+  window.addEventListener('yt-navigate-finish', () => {
+    if (isActive) {
+      setTimeout(enableYouTubeCaptions, 600);
+      setTimeout(enableYouTubeCaptions, 1600);
+    }
+  });
+
+  document.addEventListener('play', (e) => {
+    if (e.target && e.target.tagName === 'VIDEO' && isActive) {
+      setTimeout(enableYouTubeCaptions, 500);
+    }
+  }, true);
 
   // Sync initial state from background storage
   chrome.runtime.sendMessage({ action: 'GET_STATE' }, (response) => {

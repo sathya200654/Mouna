@@ -79,7 +79,12 @@ class MounaOverlay {
           <div class="mouna-loading-spinner"></div>
           <span id="mouna-loading-text">Loading Arya Avatar & ISL Rig...</span>
         </div>
-        <div class="mouna-current-sign-badge" id="mouna-sign-badge" style="display:none;"></div>
+      </div>
+
+      <!-- Dedicated Current Sign Box Directly Below Animation Viewport -->
+      <div class="mouna-current-sign-box-container">
+        <span class="mouna-current-sign-box-label">CURRENT SIGN</span>
+        <span class="mouna-current-sign-box-word" id="mouna-sign-box-word">—</span>
       </div>
 
       <!-- Transcript Banner -->
@@ -295,12 +300,17 @@ class MounaOverlay {
   }
 
   setCurrentSign(signName) {
-    const badge = this.root.querySelector('#mouna-sign-badge');
+    const boxWord = this.root.querySelector('#mouna-sign-box-word');
     if (signName) {
-      badge.textContent = `Signing: ${signName}`;
-      badge.style.display = 'block';
+      if (boxWord) {
+        boxWord.textContent = signName.toUpperCase();
+        if (boxWord.parentElement) {
+          boxWord.parentElement.classList.add('pulse');
+          setTimeout(() => boxWord.parentElement.classList.remove('pulse'), 250);
+        }
+      }
     } else {
-      badge.style.display = 'none';
+      if (boxWord) boxWord.textContent = '—';
     }
   }
 

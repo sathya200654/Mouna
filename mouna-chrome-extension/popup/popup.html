@@ -30,13 +30,22 @@
         <div class="spinner"></div>
         <span id="loading-status">Loading Arya 3D Avatar...</span>
       </div>
-      <div id="popup-sign-badge" class="sign-badge" style="display: none;"></div>
+    </div>
+
+    <!-- Current Sign Word Box (Dedicated Box Directly Below Animation) -->
+    <div class="current-sign-section">
+      <div class="section-label">CURRENT SIGN</div>
+      <div id="current-sign-box" class="current-sign-box">
+        <span id="current-sign-word" class="current-sign-word">—</span>
+        <span id="current-sign-char" class="current-sign-char" style="display: none;"></span>
+      </div>
     </div>
 
     <!-- Live Transcript / Caption Display -->
     <div class="transcript-section">
+      <div class="section-label">LIVE SUBTITLE</div>
       <div id="transcript-display" class="transcript-box">
-        <span class="placeholder-text">Audio and spoken words will appear here...</span>
+        <span class="placeholder-text">Listening to laptop audio & speech...</span>
       </div>
     </div>
 
@@ -60,6 +69,7 @@
   <script src="../src/avatar/avatar-loader.js"></script>
   <script src="../src/avatar/animation-controller.js"></script>
   <script src="../src/audio/audio-capture.js"></script>
+  <script src="../src/speech/speech-recognizer.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

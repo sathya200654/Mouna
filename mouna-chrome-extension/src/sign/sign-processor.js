@@ -144,3 +144,8 @@ class SignProcessor {
 if (typeof window !== 'undefined') {
   window.SignProcessor = SignProcessor;
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SignProcessor;
+}
+

@@ -115,7 +115,7 @@ body {
 .avatar-stage {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 240px;
   background: radial-gradient(circle at 50% 30%, #1A2236 0%, #0B0E17 90%);
   overflow: hidden;
 }
@@ -158,29 +158,68 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.sign-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  border: 1px solid rgba(0, 168, 150, 0.5);
-  color: var(--status-active);
+/* Dedicated Box-Like Structure for Current Word/Sign Directly Below Animation */
+.current-sign-section {
+  padding: 6px 12px;
+  background: #111625;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  color: #64748B;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.current-sign-box {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(0, 168, 150, 0.4);
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+  box-shadow: 0 0 10px rgba(0, 168, 150, 0.12);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.current-sign-box.pulse {
+  border-color: #00E676;
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.35);
+}
+
+.current-sign-word {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #00E676;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.current-sign-char {
   font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 16px;
-  backdrop-filter: blur(6px);
+  font-weight: 700;
+  background: rgba(0, 168, 150, 0.25);
+  color: #A7F3D0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 168, 150, 0.3);
+  letter-spacing: 0.5px;
 }
 
 /* Live Transcript Strip */
 .transcript-section {
-  padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.4);
-  border-top: 1px solid var(--border-light);
+  padding: 5px 12px;
+  background: rgba(0, 0, 0, 0.35);
   border-bottom: 1px solid var(--border-light);
-  height: 42px;
-  display: flex;
-  align-items: center;
 }
 
 .transcript-box {
@@ -191,6 +230,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: 16px;
 }
 
 .placeholder-text {

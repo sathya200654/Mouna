@@ -332,3 +332,8 @@ class SignMapper {
 if (typeof window !== 'undefined') {
   window.SignMapper = SignMapper;
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SignMapper;
+}
+

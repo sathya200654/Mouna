@@ -23,10 +23,12 @@ class SpeechRecognizer {
       { code: 'pa-IN', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' }
     ];
 
-    // Callbacks
+    // Callbacks (supporting both onTranscript and onResult interfaces)
     this.onResult = null;       // (transcript, isFinal, language)
+    this.onTranscript = null;   // (transcript, isFinal)
     this.onError = null;        // (errorMessage, errorType)
     this.onStatusChange = null; // (isListening)
+    this.onStateChange = null;  // ({ isListening })
 
     this.init();
   }
@@ -47,9 +49,8 @@ class SpeechRecognizer {
 
     this.recognition.onstart = () => {
       this.isListening = true;
-      if (this.onStatusChange) {
-        this.onStatusChange(true);
-      }
+      if (this.onStatusChange) this.onStatusChange(true);
+      if (this.onStateChange) this.onStateChange({ isListening: true });
     };
 
     this.recognition.onresult = (event) => {
@@ -67,12 +68,15 @@ class SpeechRecognizer {
         }
       }
 
-      if (this.onResult) {
-        if (finalTranscript.trim().length > 0) {
-          this.onResult(finalTranscript.trim(), true, this.currentLanguage);
-        } else if (interimTranscript.trim().length > 0) {
-          this.onResult(interimTranscript.trim(), false, this.currentLanguage);
-        }
+      const finalText = finalTranscript.trim();
+      const interimText = interimTranscript.trim();
+
+      if (finalText.length > 0) {
+        if (this.onResult) this.onResult(finalText, true, this.currentLanguage);
+        if (this.onTranscript) this.onTranscript(finalText, true);
+      } else if (interimText.length > 0) {
+        if (this.onResult) this.onResult(interimText, false, this.currentLanguage);
+        if (this.onTranscript) this.onTranscript(interimText, false);
       }
     };
 
@@ -81,12 +85,11 @@ class SpeechRecognizer {
       let userMsg = `Speech recognition error: ${event.error}`;
 
       if (event.error === 'not-allowed') {
-        userMsg = 'Microphone access denied. Please click the microphone icon in Chrome URL bar and allow access.';
+        userMsg = 'Microphone access denied. Please allow microphone access in Chrome.';
       } else if (event.error === 'no-speech') {
-        // Normal when user pauses speaking, continue
         return;
       } else if (event.error === 'network') {
-        userMsg = 'Network error occurred during speech recognition.';
+        userMsg = 'Network error during speech recognition.';
       }
 
       if (this.onError) {
@@ -96,16 +99,20 @@ class SpeechRecognizer {
 
     this.recognition.onend = () => {
       this.isListening = false;
-      if (this.onStatusChange) {
-        this.onStatusChange(false);
-      }
+      if (this.onStatusChange) this.onStatusChange(false);
+      if (this.onStateChange) this.onStateChange({ isListening: false });
 
       // Auto-restart if user still has speech recognition enabled
       if (this.shouldRestart) {
         try {
           this.recognition.start();
         } catch (err) {
-          // Will retry on user interaction
+          // Will retry on next tick
+          setTimeout(() => {
+            if (this.shouldRestart && !this.isListening) {
+              try { this.recognition.start(); } catch (e) {}
+            }
+          }, 300);
         }
       }
     };
