@@ -1,0 +1,405 @@
+/**
+ * Mouna - Floating In-Page Accessibility Overlay Styles
+ * High z-index, glassmorphism, isolated namespacing, accessible typography.
+ */
+
+#mouna-overlay-root {
+  all: initial;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 360px;
+  min-width: 280px;
+  max-width: 560px;
+  height: 520px;
+  min-height: 400px;
+  max-height: 85vh;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: rgba(18, 20, 28, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  user-select: none;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#mouna-overlay-root * {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+#mouna-overlay-root.mouna-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px) scale(0.95);
+}
+
+/* Minimized Floating Orb State */
+#mouna-overlay-root.mouna-minimized {
+  width: 56px !important;
+  min-width: 56px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  border-radius: 28px !important;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 168, 150, 0.4);
+  background: linear-gradient(135deg, #028090, #00A896);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+#mouna-overlay-root.mouna-minimized .mouna-header-title,
+#mouna-overlay-root.mouna-minimized .mouna-header-controls,
+#mouna-overlay-root.mouna-minimized .mouna-viewport-container,
+#mouna-overlay-root.mouna-minimized .mouna-transcript-container,
+#mouna-overlay-root.mouna-minimized .mouna-controls-tray,
+#mouna-overlay-root.mouna-minimized .mouna-text-drawer,
+#mouna-overlay-root.mouna-minimized .mouna-resize-handle {
+  display: none !important;
+}
+
+#mouna-overlay-root.mouna-minimized .mouna-header-bar {
+  padding: 0;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+#mouna-overlay-root.mouna-minimized .mouna-brand-icon {
+  margin: 0;
+  width: 32px;
+  height: 32px;
+}
+
+/* Header Bar */
+.mouna-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+}
+
+.mouna-header-bar:active {
+  cursor: grabbing;
+}
+
+.mouna-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mouna-brand-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #00A896;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #FFFFFF;
+}
+
+.mouna-header-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.mouna-app-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+}
+
+.mouna-sub-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.mouna-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748B;
+  display: inline-block;
+}
+
+.mouna-status-dot.active {
+  background: #00E676;
+  box-shadow: 0 0 8px #00E676;
+  animation: mouna-pulse 2s infinite;
+}
+
+.mouna-status-dot.signing {
+  background: #FFB300;
+  box-shadow: 0 0 8px #FFB300;
+}
+
+.mouna-status-dot.loading {
+  background: #00B0FF;
+  box-shadow: 0 0 8px #00B0FF;
+  animation: mouna-pulse 1s infinite;
+}
+
+@keyframes mouna-pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.mouna-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mouna-icon-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.mouna-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+/* 3D Avatar Viewport */
+.mouna-viewport-container {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  background: radial-gradient(circle at 50% 35%, #1E2333 0%, #0F121C 85%);
+  overflow: hidden;
+}
+
+.mouna-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  outline: none;
+}
+
+.mouna-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 18, 28, 0.9);
+  color: #94A3B8;
+  font-size: 12px;
+  gap: 12px;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.mouna-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 168, 150, 0.2);
+  border-top-color: #00A896;
+  border-radius: 50%;
+  animation: mouna-spin 0.8s linear infinite;
+}
+
+@keyframes mouna-spin {
+  to { transform: rotate(360deg); }
+}
+
+.mouna-current-sign-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 168, 150, 0.4);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #00E676;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Transcript Banner */
+.mouna-transcript-container {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 48px;
+  max-height: 64px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mouna-transcript-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #E2E8F0;
+  font-style: normal;
+  word-break: break-word;
+}
+
+.mouna-transcript-placeholder {
+  color: #64748B;
+  font-style: italic;
+  font-size: 11px;
+}
+
+/* Controls Tray */
+.mouna-controls-tray {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mouna-select-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.mouna-language-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 24px 6px 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.mouna-language-select:focus {
+  border-color: #00A896;
+}
+
+.mouna-select-arrow {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #94A3B8;
+  font-size: 10px;
+}
+
+.mouna-power-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #334155;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mouna-power-btn.active {
+  background: #00A896;
+  box-shadow: 0 2px 10px rgba(0, 168, 150, 0.4);
+}
+
+.mouna-power-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Live Manual Text Drawer (for instant testing & typing) */
+.mouna-text-drawer {
+  padding: 8px 12px;
+  background: rgba(10, 12, 18, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 6px;
+}
+
+.mouna-text-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #FFFFFF;
+  font-size: 12px;
+  outline: none;
+}
+
+.mouna-text-input:focus {
+  border-color: #00A896;
+}
+
+.mouna-send-btn {
+  background: #028090;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mouna-send-btn:hover {
+  background: #00A896;
+}
+
+/* Bottom Corner Resize Handle */
+.mouna-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.25) 50%);
+  border-bottom-right-radius: 16px;
+}

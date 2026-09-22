@@ -1,0 +1,7 @@
+package com.google.protobuf;
+
+/* JADX INFO: loaded from: C:\Users\abcsa\Downloads\Mouna\dex_temp\classes7.dex */
+@CheckReturnValue
+interface NewInstanceSchema {
+    Object newInstance(Object defaultInstance);
+}

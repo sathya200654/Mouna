@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouna Chrome Extension - Standalone Avatar & Pipeline Testbed</title>
+  <link rel="stylesheet" href="../content/overlay.css">
+  <style>
+    body {
+      background: #0B0E17;
+      color: #E2E8F0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 30px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .test-header {
+      max-width: 900px;
+      margin: 0 auto 24px auto;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 20px;
+    }
+    h1 {
+      color: #00A896;
+      margin: 0 0 8px 0;
+      font-size: 26px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0, 168, 150, 0.2);
+      color: #00E676;
+      border: 1px solid rgba(0, 168, 150, 0.4);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .test-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: #151A28;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    h2 {
+      font-size: 16px;
+      margin-top: 0;
+      color: #F8FAFC;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      background: #028090;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    button:hover {
+      background: #00A896;
+    }
+    input, select {
+      background: #232A3E;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 8px;
+    }
+    #log-console {
+      background: #0D101A;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+      color: #94A3B8;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <h1>Mouna ISL Chrome Extension — Testbed</h1>
+    <span class="badge">Pipeline Verification Mode</span>
+    <p style="color: #94A3B8; font-size: 13px; margin-top: 10px;">
+      This standalone harness tests the extracted 3D Arya avatar, Three.js WebGL renderer,
+      meshopt decompressor, 9-language sign translation, and the floating overlay inside a simulated webpage.
+    </p>
+  </div>
+
+  <div class="test-grid">
+    <div class="card">
+      <h2>Test Speech & Sentence Signing</h2>
+      <label for="test-sentence">Sentence or Phrase:</label>
+      <input type="text" id="test-sentence" value="Good morning everyone, thank you" />
+      <div class="btn-row">
+        <button id="sign-sentence-btn">Sign Sentence</button>
+        <button id="sign-hello-btn">Sign "Hello"</button>
+        <button id="sign-namaste-btn">Sign "नमस्ते" (Hindi)</button>
+        <button id="sign-numbers-btn">Sign "125"</button>
+        <button id="sign-spell-btn">Sign "School" (Fingerspell)</button>
+      </div>
+
+      <h2 style="margin-top: 20px;">Language Selection (9 Languages)</h2>
+      <select id="test-lang-select">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+        <option value="te">తెలుగు (Telugu)</option>
+        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+        <option value="ml">മലയാളം (Malayalam)</option>
+        <option value="gu">ગુજરાતી (Gujarati)</option>
+        <option value="mr">मराठी (Marathi)</option>
+        <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Overlay Controls</h2>
+      <div class="btn-row">
+        <button id="toggle-overlay-btn">Toggle Overlay</button>
+        <button id="minimize-btn">Toggle Minimize</button>
+        <button id="speed-up-btn">Speed 1.5x</button>
+        <button id="speed-normal-btn">Speed 1.0x</button>
+      </div>
+
+      <h2 style="margin-top: 20px;">Execution Logs</h2>
+      <div id="log-console">Initializing Mouna testbed...\n</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../lib/three.min.js"></script>
+  <script src="../lib/meshopt_decoder.js"></script>
+  <script src="../lib/GLTFLoader.js"></script>
+  <script src="../src/sign/sign-processor.js"></script>
+  <script src="../src/sign/sign-mapper.js"></script>
+  <script src="../src/sign/animation-queue.js"></script>
+  <script src="../src/avatar/renderer.js"></script>
+  <script src="../src/avatar/avatar-loader.js"></script>
+  <script src="../src/avatar/animation-controller.js"></script>
+  <script src="../src/audio/audio-capture.js"></script>
+  <script src="../src/speech/speech-recognizer.js"></script>
+  <script src="../content/overlay.js"></script>
+
+  <script>
+    const logBox = document.getElementById('log-console');
+    function log(msg) {
+      logBox.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+      logBox.scrollTop = logBox.scrollHeight;
+      console.log(msg);
+    }
+
+    // Mock chrome runtime if running standalone in browser
+    if (typeof chrome === 'undefined' || !chrome.runtime) {
+      window.chrome = {
+        runtime: {
+          getURL: (relPath) => '../' + relPath,
+          sendMessage: (msg, cb) => { if (cb) cb({ status: 'ok' }); },
+          onMessage: { addListener: () => {} }
+        },
+        storage: {
+          local: {
+            get: (k, cb) => { const res = {}; if (cb) cb(res); return Promise.resolve(res); },
+            set: (data) => Promise.resolve()
+          },
+          onChanged: { addListener: () => {} }
+        }
+      };
+    }
+
+    // Instantiate core Mouna components
+    const signProcessor = new window.SignProcessor();
+    const signMapper = new window.SignMapper();
+    const animationQueue = new window.AnimationQueue();
+    const overlay = new window.MounaOverlay();
+
+    overlay.mount();
+
+    const renderer = new window.AvatarRenderer(overlay.getCanvas());
+    renderer.init();
+
+    const avatarLoader = new window.AvatarLoader(renderer.getScene());
+    const animationController = new window.AnimationController(renderer.getScene(), animationQueue);
+
+    renderer.onUpdate = (delta) => {
+      animationController.update(delta);
+    };
+
+    animationController.onSignStart = (data) => {
+      const name = data.originalWord || data.signName || data.clipName;
+      overlay.setCurrentSign(name);
+      overlay.setStatus('signing', `Signing: ${name}`);
+      log(`Started sign: ${name} (clip: ${data.clipName})`);
+    };
+
+    animationController.onQueueEmpty = () => {
+      overlay.setCurrentSign(null);
+      overlay.setStatus('idle', 'Ready');
+      log('Queue empty. Avatar returned to idle stance.');
+    };
+
+    // Load 3D Model
+    log('Loading Arya 3D model (arya-signs.glb)...');
+    overlay.setLoading(true, 'Loading Arya 3D Avatar (85 ISL Signs)...');
+
+    avatarLoader.load(
+      '../assets/models/arya-signs.glb',
+      (loaded, total) => {
+        if (total > 0) {
+          const pct = Math.round((loaded / total) * 100);
+          overlay.setLoading(true, `Loading Arya Avatar: ${pct}%`);
+        }
+      },
+      (model, clips) => {
+        log(`Avatar loaded successfully! Registered ${clips.length} animation clips.`);
+        animationController.init(model, clips);
+        overlay.setLoading(false);
+        overlay.setStatus('idle', 'Ready');
+      },
+      (err) => {
+        log(`Error loading model: ${err.message || err}`);
+      }
+    );
+
+    function triggerSigning(text, lang = 'en') {
+      log(`Input text [${lang}]: "${text}"`);
+      overlay.setTranscript(text, true);
+
+      const words = signProcessor.normalizeText(text);
+      log(`Normalized tokens: [${words.join(', ')}]`);
+
+      const signs = signMapper.mapSentenceToSigns(words, lang);
+      log(`Mapped ${signs.length} signs: ${signs.map(s => s.signName || s.sign).join(' -> ')}`);
+
+      if (signs.length > 0) {
+        animationQueue.enqueueBatch(signs);
+        animationController.start();
+      }
+    }
+
+    // UI Buttons
+    document.getElementById('sign-sentence-btn').onclick = () => {
+      const text = document.getElementById('test-sentence').value;
+      const lang = document.getElementById('test-lang-select').value;
+      triggerSigning(text, lang);
+    };
+
+    document.getElementById('sign-hello-btn').onclick = () => triggerSigning('Hello');
+    document.getElementById('sign-namaste-btn').onclick = () => triggerSigning('नमस्ते', 'hi');
+    document.getElementById('sign-numbers-btn').onclick = () => triggerSigning('125 students');
+    document.getElementById('sign-spell-btn').onclick = () => triggerSigning('School');
+
+    document.getElementById('toggle-overlay-btn').onclick = () => overlay.toggle();
+    document.getElementById('minimize-btn').onclick = () => overlay.toggleMinimize();
+    document.getElementById('speed-up-btn').onclick = () => {
+      animationController.setSpeed(1.5);
+      overlay.setSpeed(1.5);
+      log('Set signing speed to 1.5x');
+    };
+    document.getElementById('speed-normal-btn').onclick = () => {
+      animationController.setSpeed(1.0);
+      overlay.setSpeed(1.0);
+      log('Set signing speed to 1.0x');
+    };
+  </script>
+</body>
+</html>

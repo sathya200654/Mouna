@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouna - Speech to Indian Sign Language</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="mouna-popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="header-brand">
+        <img src="../assets/icons/icon32.png" alt="Mouna Logo" class="brand-icon">
+        <div class="brand-info">
+          <h1 class="brand-title">MAUNA</h1>
+          <span class="brand-subtitle">Speech & Audio → Sign Language</span>
+        </div>
+      </div>
+      <div class="stage-overlay-status">
+        <span id="status-indicator-dot" class="status-dot"></span>
+        <span id="status-indicator-text">Standby</span>
+      </div>
+    </header>
+
+    <!-- 3D Avatar Viewport (Primary Visual Element) -->
+    <div class="avatar-stage">
+      <canvas id="popup-avatar-canvas"></canvas>
+      <div id="popup-loading" class="popup-loading">
+        <div class="spinner"></div>
+        <span id="loading-status">Loading Arya 3D Avatar...</span>
+      </div>
+      <div id="popup-sign-badge" class="sign-badge" style="display: none;"></div>
+    </div>
+
+    <!-- Live Transcript / Caption Display -->
+    <div class="transcript-section">
+      <div id="transcript-display" class="transcript-box">
+        <span class="placeholder-text">Audio and spoken words will appear here...</span>
+      </div>
+    </div>
+
+    <!-- Simple ON / OFF Master Switch -->
+    <div class="controls-section">
+      <button id="master-power-btn" class="master-power-btn">
+        <span class="power-icon">⏻</span>
+        <span id="master-power-text" class="power-text">TURN ON</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../lib/three.min.js"></script>
+  <script src="../lib/meshopt_decoder.js"></script>
+  <script src="../lib/GLTFLoader.js"></script>
+  <script src="../src/sign/sign-processor.js"></script>
+  <script src="../src/sign/sign-mapper.js"></script>
+  <script src="../src/sign/animation-queue.js"></script>
+  <script src="../src/avatar/renderer.js"></script>
+  <script src="../src/avatar/avatar-loader.js"></script>
+  <script src="../src/avatar/animation-controller.js"></script>
+  <script src="../src/audio/audio-capture.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

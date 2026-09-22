@@ -1,0 +1,47 @@
+package com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.service;
+
+import kotlin.Metadata;
+import kotlin.ResultKt;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.intrinsics.IntrinsicsKt;
+import kotlin.coroutines.jvm.internal.DebugMetadata;
+import kotlin.coroutines.jvm.internal.SuspendLambda;
+import kotlin.jvm.functions.Function2;
+import kotlinx.coroutines.CoroutineScope;
+
+/* JADX INFO: compiled from: ConversationSpeechRecognizerService.kt */
+/* JADX INFO: loaded from: C:\Users\abcsa\Downloads\Mouna\dex_temp\classes5.dex */
+@Metadata(d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u0002\n\u0002\u0018\u0002\u0010\u0000\u001a\u00020\u0001*\u00020\u0002H\n"}, d2 = {"<anonymous>", "", "Lkotlinx/coroutines/CoroutineScope;"}, k = 3, mv = {2, 2, 0}, xi = 48)
+@DebugMetadata(c = "com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.service.ConversationSpeechRecognizerService$stopListening$2$1", f = "ConversationSpeechRecognizerService.kt", i = {}, l = {}, m = "invokeSuspend", n = {}, s = {})
+final class ConversationSpeechRecognizerService$stopListening$2$1 extends SuspendLambda implements Function2<CoroutineScope, Continuation<? super Unit>, Object> {
+    final /* synthetic */ ConversationSpeechRecognizerService.SessionWrapper $session;
+    int label;
+
+    /* JADX WARN: 'super' call moved to the top of the method (can break code semantics) */
+    ConversationSpeechRecognizerService$stopListening$2$1(ConversationSpeechRecognizerService.SessionWrapper sessionWrapper, Continuation<? super ConversationSpeechRecognizerService$stopListening$2$1> continuation) {
+        super(2, continuation);
+        this.$session = sessionWrapper;
+    }
+
+    public final Continuation<Unit> create(Object obj, Continuation<?> continuation) {
+        return new ConversationSpeechRecognizerService$stopListening$2$1(this.$session, continuation);
+    }
+
+    public final Object invoke(CoroutineScope coroutineScope, Continuation<? super Unit> continuation) {
+        return create(coroutineScope, continuation).invokeSuspend(Unit.INSTANCE);
+    }
+
+    public final Object invokeSuspend(Object obj) {
+        IntrinsicsKt.getCOROUTINE_SUSPENDED();
+        if (this.label != 0) {
+            throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
+        }
+        ResultKt.throwOnFailure(obj);
+        try {
+            this.$session.getRecognizer().stopRecognizing();
+        } catch (Exception unused) {
+        }
+        return Unit.INSTANCE;
+    }
+}

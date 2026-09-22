@@ -1,0 +1,66 @@
+package com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels;
+
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.domain.repository.SettingsRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationSettingsRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.GetAvailableVoicesForLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.LogRedirectActionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ResetSelectedVoiceUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ResetUserPersonaDataUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SaveConversationLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetConversationTranscriptionFontSizeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetConversationUserLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetEnvironmentRecognitionStateUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetInterpretationModeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetInterpretationSpeedUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ToggleConversationSpeakerDetectionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.texttospeech.TextToSpeechManager;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+
+/* JADX INFO: loaded from: C:\Users\abcsa\Downloads\Mouna\dex_temp\classes5.dex */
+public final class ConversationSettingsViewModel_Factory implements Factory<ConversationSettingsViewModel> {
+    private final Provider<ConversationSettingsRepository> conversationSettingsRepositoryProvider;
+    private final Provider<GetAvailableVoicesForLanguageUseCase> getAvailableVoicesForLanguageUseCaseProvider;
+    private final Provider<LogRedirectActionUseCase> logRedirectActionUseCaseProvider;
+    private final Provider<ResetSelectedVoiceUseCase> resetSelectedVoiceUseCaseProvider;
+    private final Provider<ResetUserPersonaDataUseCase> resetUserPersonaDataUseCaseProvider;
+    private final Provider<SaveConversationLanguageUseCase> saveConversationLanguageUseCaseProvider;
+    private final Provider<SetConversationTranscriptionFontSizeUseCase> setConversationTranscriptionFontSizeUseCaseProvider;
+    private final Provider<SetConversationUserLanguageUseCase> setConversationUserLanguageUseCaseProvider;
+    private final Provider<SetEnvironmentRecognitionStateUseCase> setEnvironmentRecognitionStateUseCaseProvider;
+    private final Provider<SetInterpretationModeUseCase> setInterpretationModeUseCaseProvider;
+    private final Provider<SetInterpretationSpeedUseCase> setInterpretationSpeedUseCaseProvider;
+    private final Provider<SettingsRepository> settingsRepositoryProvider;
+    private final Provider<TextToSpeechManager> textToSpeechManagerProvider;
+    private final Provider<ToggleConversationSpeakerDetectionUseCase> toggleConversationSpeakerDetectionUseCaseProvider;
+
+    private ConversationSettingsViewModel_Factory(Provider<ConversationSettingsRepository> conversationSettingsRepositoryProvider, Provider<SettingsRepository> settingsRepositoryProvider, Provider<ResetUserPersonaDataUseCase> resetUserPersonaDataUseCaseProvider, Provider<SetConversationUserLanguageUseCase> setConversationUserLanguageUseCaseProvider, Provider<SetInterpretationModeUseCase> setInterpretationModeUseCaseProvider, Provider<SetInterpretationSpeedUseCase> setInterpretationSpeedUseCaseProvider, Provider<ToggleConversationSpeakerDetectionUseCase> toggleConversationSpeakerDetectionUseCaseProvider, Provider<SetConversationTranscriptionFontSizeUseCase> setConversationTranscriptionFontSizeUseCaseProvider, Provider<SaveConversationLanguageUseCase> saveConversationLanguageUseCaseProvider, Provider<ResetSelectedVoiceUseCase> resetSelectedVoiceUseCaseProvider, Provider<LogRedirectActionUseCase> logRedirectActionUseCaseProvider, Provider<SetEnvironmentRecognitionStateUseCase> setEnvironmentRecognitionStateUseCaseProvider, Provider<GetAvailableVoicesForLanguageUseCase> getAvailableVoicesForLanguageUseCaseProvider, Provider<TextToSpeechManager> textToSpeechManagerProvider) {
+        this.conversationSettingsRepositoryProvider = conversationSettingsRepositoryProvider;
+        this.settingsRepositoryProvider = settingsRepositoryProvider;
+        this.resetUserPersonaDataUseCaseProvider = resetUserPersonaDataUseCaseProvider;
+        this.setConversationUserLanguageUseCaseProvider = setConversationUserLanguageUseCaseProvider;
+        this.setInterpretationModeUseCaseProvider = setInterpretationModeUseCaseProvider;
+        this.setInterpretationSpeedUseCaseProvider = setInterpretationSpeedUseCaseProvider;
+        this.toggleConversationSpeakerDetectionUseCaseProvider = toggleConversationSpeakerDetectionUseCaseProvider;
+        this.setConversationTranscriptionFontSizeUseCaseProvider = setConversationTranscriptionFontSizeUseCaseProvider;
+        this.saveConversationLanguageUseCaseProvider = saveConversationLanguageUseCaseProvider;
+        this.resetSelectedVoiceUseCaseProvider = resetSelectedVoiceUseCaseProvider;
+        this.logRedirectActionUseCaseProvider = logRedirectActionUseCaseProvider;
+        this.setEnvironmentRecognitionStateUseCaseProvider = setEnvironmentRecognitionStateUseCaseProvider;
+        this.getAvailableVoicesForLanguageUseCaseProvider = getAvailableVoicesForLanguageUseCaseProvider;
+        this.textToSpeechManagerProvider = textToSpeechManagerProvider;
+    }
+
+    /* JADX INFO: renamed from: get, reason: merged with bridge method [inline-methods] */
+    public ConversationSettingsViewModel m1659get() {
+        return newInstance((ConversationSettingsRepository) this.conversationSettingsRepositoryProvider.get(), (SettingsRepository) this.settingsRepositoryProvider.get(), (ResetUserPersonaDataUseCase) this.resetUserPersonaDataUseCaseProvider.get(), (SetConversationUserLanguageUseCase) this.setConversationUserLanguageUseCaseProvider.get(), (SetInterpretationModeUseCase) this.setInterpretationModeUseCaseProvider.get(), (SetInterpretationSpeedUseCase) this.setInterpretationSpeedUseCaseProvider.get(), (ToggleConversationSpeakerDetectionUseCase) this.toggleConversationSpeakerDetectionUseCaseProvider.get(), (SetConversationTranscriptionFontSizeUseCase) this.setConversationTranscriptionFontSizeUseCaseProvider.get(), (SaveConversationLanguageUseCase) this.saveConversationLanguageUseCaseProvider.get(), (ResetSelectedVoiceUseCase) this.resetSelectedVoiceUseCaseProvider.get(), (LogRedirectActionUseCase) this.logRedirectActionUseCaseProvider.get(), (SetEnvironmentRecognitionStateUseCase) this.setEnvironmentRecognitionStateUseCaseProvider.get(), (GetAvailableVoicesForLanguageUseCase) this.getAvailableVoicesForLanguageUseCaseProvider.get(), (TextToSpeechManager) this.textToSpeechManagerProvider.get());
+    }
+
+    public static ConversationSettingsViewModel_Factory create(Provider<ConversationSettingsRepository> conversationSettingsRepositoryProvider, Provider<SettingsRepository> settingsRepositoryProvider, Provider<ResetUserPersonaDataUseCase> resetUserPersonaDataUseCaseProvider, Provider<SetConversationUserLanguageUseCase> setConversationUserLanguageUseCaseProvider, Provider<SetInterpretationModeUseCase> setInterpretationModeUseCaseProvider, Provider<SetInterpretationSpeedUseCase> setInterpretationSpeedUseCaseProvider, Provider<ToggleConversationSpeakerDetectionUseCase> toggleConversationSpeakerDetectionUseCaseProvider, Provider<SetConversationTranscriptionFontSizeUseCase> setConversationTranscriptionFontSizeUseCaseProvider, Provider<SaveConversationLanguageUseCase> saveConversationLanguageUseCaseProvider, Provider<ResetSelectedVoiceUseCase> resetSelectedVoiceUseCaseProvider, Provider<LogRedirectActionUseCase> logRedirectActionUseCaseProvider, Provider<SetEnvironmentRecognitionStateUseCase> setEnvironmentRecognitionStateUseCaseProvider, Provider<GetAvailableVoicesForLanguageUseCase> getAvailableVoicesForLanguageUseCaseProvider, Provider<TextToSpeechManager> textToSpeechManagerProvider) {
+        return new ConversationSettingsViewModel_Factory(conversationSettingsRepositoryProvider, settingsRepositoryProvider, resetUserPersonaDataUseCaseProvider, setConversationUserLanguageUseCaseProvider, setInterpretationModeUseCaseProvider, setInterpretationSpeedUseCaseProvider, toggleConversationSpeakerDetectionUseCaseProvider, setConversationTranscriptionFontSizeUseCaseProvider, saveConversationLanguageUseCaseProvider, resetSelectedVoiceUseCaseProvider, logRedirectActionUseCaseProvider, setEnvironmentRecognitionStateUseCaseProvider, getAvailableVoicesForLanguageUseCaseProvider, textToSpeechManagerProvider);
+    }
+
+    public static ConversationSettingsViewModel newInstance(ConversationSettingsRepository conversationSettingsRepository, SettingsRepository settingsRepository, ResetUserPersonaDataUseCase resetUserPersonaDataUseCase, SetConversationUserLanguageUseCase setConversationUserLanguageUseCase, SetInterpretationModeUseCase setInterpretationModeUseCase, SetInterpretationSpeedUseCase setInterpretationSpeedUseCase, ToggleConversationSpeakerDetectionUseCase toggleConversationSpeakerDetectionUseCase, SetConversationTranscriptionFontSizeUseCase setConversationTranscriptionFontSizeUseCase, SaveConversationLanguageUseCase saveConversationLanguageUseCase, ResetSelectedVoiceUseCase resetSelectedVoiceUseCase, LogRedirectActionUseCase logRedirectActionUseCase, SetEnvironmentRecognitionStateUseCase setEnvironmentRecognitionStateUseCase, GetAvailableVoicesForLanguageUseCase getAvailableVoicesForLanguageUseCase, TextToSpeechManager textToSpeechManager) {
+        return new ConversationSettingsViewModel(conversationSettingsRepository, settingsRepository, resetUserPersonaDataUseCase, setConversationUserLanguageUseCase, setInterpretationModeUseCase, setInterpretationSpeedUseCase, toggleConversationSpeakerDetectionUseCase, setConversationTranscriptionFontSizeUseCase, saveConversationLanguageUseCase, resetSelectedVoiceUseCase, logRedirectActionUseCase, setEnvironmentRecognitionStateUseCase, getAvailableVoicesForLanguageUseCase, textToSpeechManager);
+    }
+}

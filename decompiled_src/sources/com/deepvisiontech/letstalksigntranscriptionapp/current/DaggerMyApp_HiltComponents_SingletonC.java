@@ -1,0 +1,1355 @@
+package com.deepvisiontech.letstalksigntranscriptionapp.current;
+
+import android.app.Activity;
+import android.app.Service;
+import android.net.ConnectivityManager;
+import android.view.View;
+import androidx.credentials.CredentialManager;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.SavedStateHandle;
+import androidx.lifecycle.ViewModel;
+import androidx.wear.compose.foundation.SwipeToRevealKt;
+import androidx.wear.compose.material.AnimationKt;
+import com.azure.xml.implementation.aalto.in.ReaderConfig;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.data.remote.api.AnalyticsApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.data.services.AnalyticsManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.di.AnalyticsModule_ProvideAnalyticsApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.di.AnalyticsModule_ProvideAnalyticsManagerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.di.AnalyticsModule_ProvideAnalyticsRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.di.AnalyticsModule_ProvideAppUsageRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.domain.repository.AnalyticsRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.analytics.domain.repository.AppUsageRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.domain.usecase.SendSoundEventsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.AppViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.AppViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.AppViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.AppViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.NavigationViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.NavigationViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.NavigationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.app.presentation.viewmodel.NavigationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.data.remote.api.AuthApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.di.AuthModule_ProvideAuthApiServiceFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.di.AuthModule_ProvideAuthRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.di.CredentialModule_ProvideCredentialManagerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.di.CredentialModule_ProvideCredentialRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.di.SessionModule_ProvideSessionRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.repository.AuthRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.repository.CredentialRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.repository.SessionRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.usecase.FetchAndSaveMailIdUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.usecase.LogOutAndClearMailIdUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.usecase.LoginAndSaveTokenUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.domain.usecase.SetEnvironmentRecognizerStateUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.CredentialViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.CredentialViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.CredentialViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.CredentialViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SetUpViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SetUpViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SetUpViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SetUpViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SplashScreenViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SplashScreenViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SplashScreenViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.auth.presentation.viewmodels.SplashScreenViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.data.local.LtsRoomDatabase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.data.remote.api.LtsTranslationApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideAnalyticsAndResponseRetrofitFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideAppDatabaseFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideDefaultDispatcherFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideIoDispatcherFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideLoggingInterceptorFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideLtsRetrofitFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideLtsTranslationRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideOkHttpClientFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvideSettingsRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.AppModule_ProvidesLtsTranslationApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.di.ApplicationLifeCycleObserver;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.domain.repository.LtsTranslationRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.domain.repository.SettingsRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.ConversationSharedViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.ConversationSharedViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.ConversationSharedViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.ConversationSharedViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.MainViewModelCurrent;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.MainViewModelCurrent_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.MainViewModelCurrent_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.common.presentation.viewmodels.MainViewModelCurrent_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.local.dao.ConversationDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.local.dao.ConversationInputSuggestionDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.local.dao.ConversationMessageDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.remote.api.ConversationOcrApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.remote.api.ConversationSuggestionsApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.remote.api.ConversationSummaryApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.remote.api.ConversationUsageApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.data.service.ConversationSpeechRecognizerService;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationInputSuggestionDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationMessageDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationMessageRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationOcrApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationSessionRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationSettingsRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationSuggestionApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationSuggestionRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationSummaryApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationUsageApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.di.ConversationModule_ProvideConversationUsageRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationMessageRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationSessionRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationSettingsRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.ConversationUsageRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.repository.conversationsuggestion.ConversationSuggestionRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.DeleteConversationsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.ExtractTextFromImageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.GetAllFilteredConversationsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.GetAllFilteredMessagesOfConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.InsertAndSetActiveConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.InterpretConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.RecognizeSpeechInterpretAndInsertMessageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.SetActiveConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.SetConversationModeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.SpeakAndInsertMessageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.SpeakConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.StopInterpretationAndTranscriptionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.TranslateInterpretAndSaveMessageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversation.GetActiveOrNewConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversation.UpdateConversationUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.GetAvailableVoicesForLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.LogRedirectActionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ResetSelectedVoiceUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ResetUserPersonaDataUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SaveConversationLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetConversationSpeakerLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetConversationTranscriptionFontSizeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetConversationUserLanguageUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetEnvironmentRecognitionStateUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetInterpretationModeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.SetInterpretationSpeedUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsettings.ToggleConversationSpeakerDetectionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.DeleteConversationInputSuggestionCategoryUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.DeleteConversationInputSuggestionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.FetchConversationInputSuggestionsFromNetwork;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.FetchCorrectionSuggestionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.GetAllConversationInputSuggestionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsuggestion.InsertConversationInputSuggestionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationsummary.GenerateAndInsertConversationSummaryUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationusage.CheckAndResetDailyLimitsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecase.conversationusage.SyncConversationUsageLimitsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecasewrappers.ConversationManagementUseCases;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecasewrappers.ConversationSettingsUseCases;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecasewrappers.InterpretationUseCases;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecasewrappers.SuggestionUseCases;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.domain.usecasewrappers.TextToSpeechUseCases;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationListViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationListViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationListViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationListViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationSettingsViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationSettingsViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationSettingsViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationSettingsViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.ConversationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.DocumentScannerViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.DocumentScannerViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.DocumentScannerViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.DocumentScannerViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.HomeViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.HomeViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.HomeViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.conversations.presentation.viewmodels.HomeViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.audiorecorder.data.local.AudioOrchestrator;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.audiorecorder.data.local.SharedAudioEngine;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.SoundRecognizerModule_ProvidesSoundRecognizerServiceFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.data.local.daos.EnvironmentSoundHistoryDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.di.EnvSoundModule_ProvideEnvSoundHistoryDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.di.EnvSoundModule_ProvideEnvSoundHistoryRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.domain.repository.EnvironmentSoundHistoryRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.domain.services.EnvSoundRecognizerService;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.presentation.viewmodel.EnvironmentSoundHistoryViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.presentation.viewmodel.EnvironmentSoundHistoryViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.presentation.viewmodel.EnvironmentSoundHistoryViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.envsoundrecognizer.presentation.viewmodel.EnvironmentSoundHistoryViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.media.MediaPlayerManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.network.data.NetworkMonitor;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.network.di.NetworkDiModule_ProvideConnectivityManagerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.network.di.NetworkDiModule_ProvideNetworkMonitorFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.notificationintent.di.ManagerModule_ProvideNotificationIntentMangerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.notificationintent.domain.repository.NotificationIntentManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.shareintent.di.ShareIntentModule_ProvideShareIntentMangerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.shareintent.domain.ShareIntentManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.data.factory.SpeechRecognizerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.data.local.SpeechRecogMicrophoneStream;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.data.remote.api.SpeechToTextApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.di.SpeechToTextModule_ProvideSpeechToTextApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.di.SpeechToTextModule_ProvideSpeechToTextRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.speechtotext.domain.repository.SpeechToTextRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.texttospeech.TextToSpeechManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.webview.WebViewModule_ProvidesWebViewManagerFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.core.webview.domain.manager.WebViewManager;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.engagement.di.EngagementModule_ProvideEngagementRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.engagement.domain.repository.EngagementRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.engagement.domain.usecase.ShowShareAppDialogUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.feature.network.presentation.NetworkUnavailableViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.feature.network.presentation.NetworkUnavailableViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.feature.network.presentation.NetworkUnavailableViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.feature.network.presentation.NetworkUnavailableViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.data.local.dao.NotificationDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.data.remote.api.NotificationApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.data.services.PushNotificationService;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.data.services.PushNotificationService_MembersInjector;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.di.NotificationModule_ProvideApplicationScopeFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.di.NotificationModule_ProvideNotificationApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.di.NotificationModule_ProvideNotificationDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.di.NotificationModule_ProvideNotificationRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.repository.NotificationRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.usecase.DeleteNotificationsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.usecase.GetAllFilteredNotificationsUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.usecase.GetNotificationFlowUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.usecase.SubmitNotificationActionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.domain.usecase.SubmitNotificationListActionUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationListViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationListViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationListViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationListViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.presentation.viewmodels.NotificationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.data.remote.api.PersonaSurveyApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.di.UserPersonaModule_ProvidePersonaSurveyRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.di.UserPersonaModule_ProvideUserPersonaApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.domain.repository.PersonaSurveyRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.domain.usecase.SubmitPersonaDataUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.domain.usecase.SyncPendingPersonaDataUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.presentation.viewmodels.OnBoardingViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.presentation.viewmodels.OnBoardingViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.presentation.viewmodels.OnBoardingViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.personasurvey.presentation.viewmodels.OnBoardingViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.data.local.dao.SignPracticeDao;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.data.remote.api.SignPracticeApi;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.di.SignPracticeModule_ProvideSignPracticeApiFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.di.SignPracticeModule_ProvideSignPracticeDaoFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.di.SignPracticeModule_ProvideSignPracticeRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.repository.SignPracticeRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.DeleteSignPracticeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.GetAllFilteredSignPracticesUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.GetSignPracticeFlowUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.IncrementSignPracticeOpenCountUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.InsertSignPracticeAndGetIdUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.domain.usecase.TranslateAndInterpretSignPracticeUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeCreationViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeCreationViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeCreationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeCreationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeListViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeListViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeListViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeListViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeSessionViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeSessionViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeSessionViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.signpractice.presentation.viewmodels.SignPracticeSessionViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.data.remote.api.VideoApiService;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.data.vision.VisionDetector;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.di.VideoAnnotationModule_ProvideVideoApiServiceFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.di.VideoAnnotationModule_ProvideVideoRetrofitFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.di.VideoAnnotationModule_ProvideVideoUploadRepositoryFactory;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.domain.repository.VideoUploadRepository;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.domain.usecase.UploadVideoUseCase;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.presentation.viewmodels.VideoUploadViewModel;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.presentation.viewmodels.VideoUploadViewModel_HiltModules;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.presentation.viewmodels.VideoUploadViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.deepvisiontech.letstalksigntranscriptionapp.current.videoannotation.presentation.viewmodels.VideoUploadViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.fasterxml.jackson.core.internal.shaded.fdp.v2_18_4_1.FastDoubleMath;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.flatbuffers.FlexBuffers;
+import com.google.protobuf.DescriptorProtos;
+import dagger.hilt.android.ActivityRetainedLifecycle;
+import dagger.hilt.android.ViewModelLifecycle;
+import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
+import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
+import dagger.hilt.android.internal.builders.FragmentComponentBuilder;
+import dagger.hilt.android.internal.builders.ServiceComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories_InternalFactoryFactory_Factory;
+import dagger.hilt.android.internal.managers.ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory;
+import dagger.hilt.android.internal.managers.SavedStateHandleHolder;
+import dagger.hilt.android.internal.modules.ApplicationContextModule;
+import dagger.hilt.android.internal.modules.ApplicationContextModule_ProvideContextFactory;
+import dagger.internal.DoubleCheck;
+import dagger.internal.LazyClassKeyMap;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import java.util.Map;
+import java.util.Set;
+import kotlinx.coroutines.CoroutineScope;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Retrofit;
+
+/* JADX INFO: loaded from: C:\Users\abcsa\Downloads\Mouna\dex_temp\classes5.dex */
+public final class DaggerMyApp_HiltComponents_SingletonC {
+    private DaggerMyApp_HiltComponents_SingletonC() {
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private ApplicationContextModule applicationContextModule;
+
+        private Builder() {
+        }
+
+        public Builder applicationContextModule(ApplicationContextModule applicationContextModule) {
+            this.applicationContextModule = (ApplicationContextModule) Preconditions.checkNotNull(applicationContextModule);
+            return this;
+        }
+
+        public MyApp_HiltComponents.SingletonC build() {
+            Preconditions.checkBuilderRequirement(this.applicationContextModule, ApplicationContextModule.class);
+            return new SingletonCImpl(this.applicationContextModule);
+        }
+    }
+
+    private static final class ActivityRetainedCBuilder implements MyApp_HiltComponents.ActivityRetainedC.Builder {
+        private SavedStateHandleHolder savedStateHandleHolder;
+        private final SingletonCImpl singletonCImpl;
+
+        private ActivityRetainedCBuilder(SingletonCImpl singletonCImpl) {
+            this.singletonCImpl = singletonCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder
+        public ActivityRetainedCBuilder savedStateHandleHolder(SavedStateHandleHolder savedStateHandleHolder) {
+            this.savedStateHandleHolder = (SavedStateHandleHolder) Preconditions.checkNotNull(savedStateHandleHolder);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder
+        public MyApp_HiltComponents.ActivityRetainedC build() {
+            Preconditions.checkBuilderRequirement(this.savedStateHandleHolder, SavedStateHandleHolder.class);
+            return new ActivityRetainedCImpl(this.singletonCImpl, this.savedStateHandleHolder);
+        }
+    }
+
+    private static final class ActivityCBuilder implements MyApp_HiltComponents.ActivityC.Builder {
+        private Activity activity;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final SingletonCImpl singletonCImpl;
+
+        private ActivityCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ActivityComponentBuilder
+        public ActivityCBuilder activity(Activity activity) {
+            this.activity = (Activity) Preconditions.checkNotNull(activity);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ActivityComponentBuilder
+        public MyApp_HiltComponents.ActivityC build() {
+            Preconditions.checkBuilderRequirement(this.activity, Activity.class);
+            return new ActivityCImpl(this.singletonCImpl, this.activityRetainedCImpl, this.activity);
+        }
+    }
+
+    private static final class FragmentCBuilder implements MyApp_HiltComponents.FragmentC.Builder {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private Fragment fragment;
+        private final SingletonCImpl singletonCImpl;
+
+        private FragmentCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.FragmentComponentBuilder
+        public FragmentCBuilder fragment(Fragment fragment) {
+            this.fragment = (Fragment) Preconditions.checkNotNull(fragment);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.FragmentComponentBuilder
+        public MyApp_HiltComponents.FragmentC build() {
+            Preconditions.checkBuilderRequirement(this.fragment, Fragment.class);
+            return new FragmentCImpl(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl, this.fragment);
+        }
+    }
+
+    private static final class ViewWithFragmentCBuilder implements MyApp_HiltComponents.ViewWithFragmentC.Builder {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final FragmentCImpl fragmentCImpl;
+        private final SingletonCImpl singletonCImpl;
+        private View view;
+
+        private ViewWithFragmentCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl, FragmentCImpl fragmentCImpl) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+            this.fragmentCImpl = fragmentCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder
+        public ViewWithFragmentCBuilder view(View view) {
+            this.view = (View) Preconditions.checkNotNull(view);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder
+        public MyApp_HiltComponents.ViewWithFragmentC build() {
+            Preconditions.checkBuilderRequirement(this.view, View.class);
+            return new ViewWithFragmentCImpl(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl, this.fragmentCImpl, this.view);
+        }
+    }
+
+    private static final class ViewCBuilder implements MyApp_HiltComponents.ViewC.Builder {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final SingletonCImpl singletonCImpl;
+        private View view;
+
+        private ViewCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewComponentBuilder
+        public ViewCBuilder view(View view) {
+            this.view = (View) Preconditions.checkNotNull(view);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewComponentBuilder
+        public MyApp_HiltComponents.ViewC build() {
+            Preconditions.checkBuilderRequirement(this.view, View.class);
+            return new ViewCImpl(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl, this.view);
+        }
+    }
+
+    private static final class ViewModelCBuilder implements MyApp_HiltComponents.ViewModelC.Builder {
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private SavedStateHandle savedStateHandle;
+        private final SingletonCImpl singletonCImpl;
+        private ViewModelLifecycle viewModelLifecycle;
+
+        private ViewModelCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewModelComponentBuilder
+        public ViewModelCBuilder savedStateHandle(SavedStateHandle handle) {
+            this.savedStateHandle = (SavedStateHandle) Preconditions.checkNotNull(handle);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewModelComponentBuilder
+        public ViewModelCBuilder viewModelLifecycle(ViewModelLifecycle viewModelLifecycle) {
+            this.viewModelLifecycle = (ViewModelLifecycle) Preconditions.checkNotNull(viewModelLifecycle);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ViewModelComponentBuilder
+        public MyApp_HiltComponents.ViewModelC build() {
+            Preconditions.checkBuilderRequirement(this.savedStateHandle, SavedStateHandle.class);
+            Preconditions.checkBuilderRequirement(this.viewModelLifecycle, ViewModelLifecycle.class);
+            return new ViewModelCImpl(this.singletonCImpl, this.activityRetainedCImpl, this.savedStateHandle, this.viewModelLifecycle);
+        }
+    }
+
+    private static final class ServiceCBuilder implements MyApp_HiltComponents.ServiceC.Builder {
+        private Service service;
+        private final SingletonCImpl singletonCImpl;
+
+        private ServiceCBuilder(SingletonCImpl singletonCImpl) {
+            this.singletonCImpl = singletonCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ServiceComponentBuilder
+        public ServiceCBuilder service(Service service) {
+            this.service = (Service) Preconditions.checkNotNull(service);
+            return this;
+        }
+
+        @Override // dagger.hilt.android.internal.builders.ServiceComponentBuilder
+        public MyApp_HiltComponents.ServiceC build() {
+            Preconditions.checkBuilderRequirement(this.service, Service.class);
+            return new ServiceCImpl(this.singletonCImpl, this.service);
+        }
+    }
+
+    private static final class ViewWithFragmentCImpl extends MyApp_HiltComponents.ViewWithFragmentC {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final FragmentCImpl fragmentCImpl;
+        private final SingletonCImpl singletonCImpl;
+        private final ViewWithFragmentCImpl viewWithFragmentCImpl = this;
+
+        ViewWithFragmentCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl, FragmentCImpl fragmentCImpl, View viewParam) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+            this.fragmentCImpl = fragmentCImpl;
+        }
+    }
+
+    private static final class FragmentCImpl extends MyApp_HiltComponents.FragmentC {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final FragmentCImpl fragmentCImpl = this;
+        private final SingletonCImpl singletonCImpl;
+
+        FragmentCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl, Fragment fragmentParam) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories.FragmentEntryPoint
+        public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+            return this.activityCImpl.getHiltInternalFactoryFactory();
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ViewComponentManager.ViewWithFragmentComponentBuilderEntryPoint
+        public ViewWithFragmentComponentBuilder viewWithFragmentComponentBuilder() {
+            return new ViewWithFragmentCBuilder(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl, this.fragmentCImpl);
+        }
+    }
+
+    private static final class ViewCImpl extends MyApp_HiltComponents.ViewC {
+        private final ActivityCImpl activityCImpl;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final SingletonCImpl singletonCImpl;
+        private final ViewCImpl viewCImpl = this;
+
+        ViewCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl, View viewParam) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.activityCImpl = activityCImpl;
+        }
+    }
+
+    private static final class ActivityCImpl extends MyApp_HiltComponents.ActivityC {
+        private final ActivityCImpl activityCImpl = this;
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        private final SingletonCImpl singletonCImpl;
+
+        ActivityCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, Activity activityParam) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+        }
+
+        @Override // com.deepvisiontech.letstalksigntranscriptionapp.current.MainActivity_GeneratedInjector
+        public void injectMainActivity(MainActivity mainActivity) {
+            injectMainActivity2(mainActivity);
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories.ActivityEntryPoint
+        public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+            return DefaultViewModelFactories_InternalFactoryFactory_Factory.newInstance(getViewModelKeys(), new ViewModelCBuilder(this.singletonCImpl, this.activityRetainedCImpl));
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.HiltViewModelFactory.ActivityCreatorEntryPoint
+        public Map<Class<?>, Boolean> getViewModelKeys() {
+            return LazyClassKeyMap.of(ImmutableMap.builderWithExpectedSize(21).put(AppViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(AppViewModel_HiltModules.KeyModule.provide())).put(ConversationListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(ConversationListViewModel_HiltModules.KeyModule.provide())).put(ConversationSettingsViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(ConversationSettingsViewModel_HiltModules.KeyModule.provide())).put(ConversationSharedViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(ConversationSharedViewModel_HiltModules.KeyModule.provide())).put(ConversationViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(ConversationViewModel_HiltModules.KeyModule.provide())).put(CredentialViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(CredentialViewModel_HiltModules.KeyModule.provide())).put(DocumentScannerViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(DocumentScannerViewModel_HiltModules.KeyModule.provide())).put(EnvironmentSoundHistoryViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(EnvironmentSoundHistoryViewModel_HiltModules.KeyModule.provide())).put(HomeViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(HomeViewModel_HiltModules.KeyModule.provide())).put(MainViewModelCurrent_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(MainViewModelCurrent_HiltModules.KeyModule.provide())).put(NavigationViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(NavigationViewModel_HiltModules.KeyModule.provide())).put(NetworkUnavailableViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(NetworkUnavailableViewModel_HiltModules.KeyModule.provide())).put(NotificationListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(NotificationListViewModel_HiltModules.KeyModule.provide())).put(NotificationViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(NotificationViewModel_HiltModules.KeyModule.provide())).put(OnBoardingViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(OnBoardingViewModel_HiltModules.KeyModule.provide())).put(SetUpViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(SetUpViewModel_HiltModules.KeyModule.provide())).put(SignPracticeCreationViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(SignPracticeCreationViewModel_HiltModules.KeyModule.provide())).put(SignPracticeListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(SignPracticeListViewModel_HiltModules.KeyModule.provide())).put(SignPracticeSessionViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(SignPracticeSessionViewModel_HiltModules.KeyModule.provide())).put(SplashScreenViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(SplashScreenViewModel_HiltModules.KeyModule.provide())).put(VideoUploadViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, Boolean.valueOf(VideoUploadViewModel_HiltModules.KeyModule.provide())).build());
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.HiltViewModelFactory.ActivityCreatorEntryPoint
+        public ViewModelComponentBuilder getViewModelComponentBuilder() {
+            return new ViewModelCBuilder(this.singletonCImpl, this.activityRetainedCImpl);
+        }
+
+        @Override // dagger.hilt.android.internal.managers.FragmentComponentManager.FragmentComponentBuilderEntryPoint
+        public FragmentComponentBuilder fragmentComponentBuilder() {
+            return new FragmentCBuilder(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl);
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ViewComponentManager.ViewComponentBuilderEntryPoint
+        public ViewComponentBuilder viewComponentBuilder() {
+            return new ViewCBuilder(this.singletonCImpl, this.activityRetainedCImpl, this.activityCImpl);
+        }
+
+        private MainActivity injectMainActivity2(MainActivity instance) {
+            MainActivity_MembersInjector.injectAnalyticsManager(instance, (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+            MainActivity_MembersInjector.injectWebViewManager(instance, (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get());
+            MainActivity_MembersInjector.injectShareIntentManager(instance, (ShareIntentManager) this.singletonCImpl.provideShareIntentMangerProvider.get());
+            MainActivity_MembersInjector.injectNotificationIntentManager(instance, (NotificationIntentManager) this.singletonCImpl.provideNotificationIntentMangerProvider.get());
+            return instance;
+        }
+    }
+
+    private static final class ViewModelCImpl extends MyApp_HiltComponents.ViewModelC {
+        private final ActivityRetainedCImpl activityRetainedCImpl;
+        Provider<AppViewModel> appViewModelProvider;
+        Provider<ConversationListViewModel> conversationListViewModelProvider;
+        Provider<ConversationSettingsViewModel> conversationSettingsViewModelProvider;
+        Provider<ConversationSharedViewModel> conversationSharedViewModelProvider;
+        Provider<ConversationViewModel> conversationViewModelProvider;
+        Provider<CredentialViewModel> credentialViewModelProvider;
+        Provider<DocumentScannerViewModel> documentScannerViewModelProvider;
+        Provider<EnvironmentSoundHistoryViewModel> environmentSoundHistoryViewModelProvider;
+        Provider<HomeViewModel> homeViewModelProvider;
+        Provider<MainViewModelCurrent> mainViewModelCurrentProvider;
+        Provider<NavigationViewModel> navigationViewModelProvider;
+        Provider<NetworkUnavailableViewModel> networkUnavailableViewModelProvider;
+        Provider<NotificationListViewModel> notificationListViewModelProvider;
+        Provider<NotificationViewModel> notificationViewModelProvider;
+        Provider<OnBoardingViewModel> onBoardingViewModelProvider;
+        private final SavedStateHandle savedStateHandle;
+        Provider<SetUpViewModel> setUpViewModelProvider;
+        Provider<SignPracticeCreationViewModel> signPracticeCreationViewModelProvider;
+        Provider<SignPracticeListViewModel> signPracticeListViewModelProvider;
+        Provider<SignPracticeSessionViewModel> signPracticeSessionViewModelProvider;
+        private final SingletonCImpl singletonCImpl;
+        Provider<SplashScreenViewModel> splashScreenViewModelProvider;
+        Provider<VideoUploadViewModel> videoUploadViewModelProvider;
+        private final ViewModelCImpl viewModelCImpl = this;
+        Provider<VisionDetector> visionDetectorProvider;
+
+        ViewModelCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, SavedStateHandle savedStateHandleParam, ViewModelLifecycle viewModelLifecycleParam) {
+            this.singletonCImpl = singletonCImpl;
+            this.activityRetainedCImpl = activityRetainedCImpl;
+            this.savedStateHandle = savedStateHandleParam;
+            initialize(savedStateHandleParam, viewModelLifecycleParam);
+        }
+
+        ShowShareAppDialogUseCase showShareAppDialogUseCase() {
+            return new ShowShareAppDialogUseCase((AppUsageRepository) this.singletonCImpl.provideAppUsageRepositoryProvider.get(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get());
+        }
+
+        SendSoundEventsUseCase sendSoundEventsUseCase() {
+            return new SendSoundEventsUseCase((AudioOrchestrator) this.singletonCImpl.audioOrchestratorProvider.get(), (EnvironmentSoundHistoryRepository) this.singletonCImpl.provideEnvSoundHistoryRepositoryProvider.get());
+        }
+
+        LogOutAndClearMailIdUseCase logOutAndClearMailIdUseCase() {
+            return new LogOutAndClearMailIdUseCase((AuthRepository) this.singletonCImpl.provideAuthRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (CredentialRepository) this.singletonCImpl.provideCredentialRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        GetAllFilteredConversationsUseCase getAllFilteredConversationsUseCase() {
+            return new GetAllFilteredConversationsUseCase((ConversationRepository) this.singletonCImpl.provideConversationRepositoryProvider.get());
+        }
+
+        SetActiveConversationUseCase setActiveConversationUseCase() {
+            return new SetActiveConversationUseCase((ConversationSessionRepository) this.singletonCImpl.provideConversationSessionRepositoryProvider.get());
+        }
+
+        DeleteConversationsUseCase deleteConversationsUseCase() {
+            return new DeleteConversationsUseCase((ConversationSessionRepository) this.singletonCImpl.provideConversationSessionRepositoryProvider.get(), (ConversationRepository) this.singletonCImpl.provideConversationRepositoryProvider.get());
+        }
+
+        InsertAndSetActiveConversationUseCase insertAndSetActiveConversationUseCase() {
+            return new InsertAndSetActiveConversationUseCase((ConversationRepository) this.singletonCImpl.provideConversationRepositoryProvider.get(), (ConversationSessionRepository) this.singletonCImpl.provideConversationSessionRepositoryProvider.get());
+        }
+
+        ResetUserPersonaDataUseCase resetUserPersonaDataUseCase() {
+            return new ResetUserPersonaDataUseCase((PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetConversationUserLanguageUseCase setConversationUserLanguageUseCase() {
+            return new SetConversationUserLanguageUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetInterpretationModeUseCase setInterpretationModeUseCase() {
+            return new SetInterpretationModeUseCase((SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetInterpretationSpeedUseCase setInterpretationSpeedUseCase() {
+            return new SetInterpretationSpeedUseCase((SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get());
+        }
+
+        ToggleConversationSpeakerDetectionUseCase toggleConversationSpeakerDetectionUseCase() {
+            return new ToggleConversationSpeakerDetectionUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetConversationTranscriptionFontSizeUseCase setConversationTranscriptionFontSizeUseCase() {
+            return new SetConversationTranscriptionFontSizeUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get());
+        }
+
+        SaveConversationLanguageUseCase saveConversationLanguageUseCase() {
+            return new SaveConversationLanguageUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get());
+        }
+
+        ResetSelectedVoiceUseCase resetSelectedVoiceUseCase() {
+            return new ResetSelectedVoiceUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get());
+        }
+
+        LogRedirectActionUseCase logRedirectActionUseCase() {
+            return new LogRedirectActionUseCase((AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetEnvironmentRecognitionStateUseCase setEnvironmentRecognitionStateUseCase() {
+            return new SetEnvironmentRecognitionStateUseCase((SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get());
+        }
+
+        GetAvailableVoicesForLanguageUseCase getAvailableVoicesForLanguageUseCase() {
+            return new GetAvailableVoicesForLanguageUseCase((TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get(), (ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get());
+        }
+
+        InterpretationUseCases interpretationUseCases() {
+            return new InterpretationUseCases((RecognizeSpeechInterpretAndInsertMessageUseCase) this.singletonCImpl.recognizeSpeechInterpretAndInsertMessageUseCaseProvider.get(), (InterpretConversationUseCase) this.singletonCImpl.interpretConversationUseCaseProvider.get(), (TranslateInterpretAndSaveMessageUseCase) this.singletonCImpl.translateInterpretAndSaveMessageUseCaseProvider.get(), (StopInterpretationAndTranscriptionUseCase) this.singletonCImpl.stopInterpretationAndTranscriptionUseCaseProvider.get());
+        }
+
+        GetActiveOrNewConversationUseCase getActiveOrNewConversationUseCase() {
+            return new GetActiveOrNewConversationUseCase((ConversationSessionRepository) this.singletonCImpl.provideConversationSessionRepositoryProvider.get(), (ConversationRepository) this.singletonCImpl.provideConversationRepositoryProvider.get());
+        }
+
+        ConversationManagementUseCases conversationManagementUseCases() {
+            return new ConversationManagementUseCases((GetAllFilteredMessagesOfConversationUseCase) this.singletonCImpl.getAllFilteredMessagesOfConversationUseCaseProvider.get(), (UpdateConversationUseCase) this.singletonCImpl.updateConversationUseCaseProvider.get(), (SetConversationModeUseCase) this.singletonCImpl.setConversationModeUseCaseProvider.get(), (GenerateAndInsertConversationSummaryUseCase) this.singletonCImpl.generateAndInsertConversationSummaryUseCaseProvider.get(), getActiveOrNewConversationUseCase());
+        }
+
+        CheckAndResetDailyLimitsUseCase checkAndResetDailyLimitsUseCase() {
+            return new CheckAndResetDailyLimitsUseCase((ConversationUsageRepository) this.singletonCImpl.provideConversationUsageRepositoryProvider.get());
+        }
+
+        SetConversationSpeakerLanguageUseCase setConversationSpeakerLanguageUseCase() {
+            return new SetConversationSpeakerLanguageUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        ConversationSettingsUseCases conversationSettingsUseCases() {
+            return new ConversationSettingsUseCases(setConversationUserLanguageUseCase(), setConversationSpeakerLanguageUseCase());
+        }
+
+        SpeakAndInsertMessageUseCase speakAndInsertMessageUseCase() {
+            return new SpeakAndInsertMessageUseCase((ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get(), (ConversationUsageRepository) this.singletonCImpl.provideConversationUsageRepositoryProvider.get(), (TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), (LtsTranslationRepository) this.singletonCImpl.provideLtsTranslationRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+        }
+
+        SpeakConversationUseCase speakConversationUseCase() {
+            return new SpeakConversationUseCase((TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get(), (ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get());
+        }
+
+        TextToSpeechUseCases textToSpeechUseCases() {
+            return new TextToSpeechUseCases(speakAndInsertMessageUseCase(), speakConversationUseCase());
+        }
+
+        FetchAndSaveMailIdUseCase fetchAndSaveMailIdUseCase() {
+            return new FetchAndSaveMailIdUseCase((CredentialRepository) this.singletonCImpl.provideCredentialRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+        }
+
+        ExtractTextFromImageUseCase extractTextFromImageUseCase() {
+            return new ExtractTextFromImageUseCase((SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (ConversationOcrApi) this.singletonCImpl.provideConversationOcrApiProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        GetAllFilteredNotificationsUseCase getAllFilteredNotificationsUseCase() {
+            return new GetAllFilteredNotificationsUseCase((NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get());
+        }
+
+        DeleteNotificationsUseCase deleteNotificationsUseCase() {
+            return new DeleteNotificationsUseCase((NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get());
+        }
+
+        GetNotificationFlowUseCase getNotificationFlowUseCase() {
+            return new GetNotificationFlowUseCase((NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get());
+        }
+
+        SubmitNotificationActionUseCase submitNotificationActionUseCase() {
+            return new SubmitNotificationActionUseCase((NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+        }
+
+        SubmitNotificationListActionUseCase submitNotificationListActionUseCase() {
+            return new SubmitNotificationListActionUseCase((NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+        }
+
+        SubmitPersonaDataUseCase submitPersonaDataUseCase() {
+            return new SubmitPersonaDataUseCase((PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get());
+        }
+
+        LoginAndSaveTokenUseCase loginAndSaveTokenUseCase() {
+            return new LoginAndSaveTokenUseCase((AuthRepository) this.singletonCImpl.provideAuthRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SetEnvironmentRecognizerStateUseCase setEnvironmentRecognizerStateUseCase() {
+            return new SetEnvironmentRecognizerStateUseCase((SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get());
+        }
+
+        InsertSignPracticeAndGetIdUseCase insertSignPracticeAndGetIdUseCase() {
+            return new InsertSignPracticeAndGetIdUseCase((SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), (TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get());
+        }
+
+        DeleteSignPracticeUseCase deleteSignPracticeUseCase() {
+            return new DeleteSignPracticeUseCase((SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        IncrementSignPracticeOpenCountUseCase incrementSignPracticeOpenCountUseCase() {
+            return new IncrementSignPracticeOpenCountUseCase((SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get());
+        }
+
+        GetAllFilteredSignPracticesUseCase getAllFilteredSignPracticesUseCase() {
+            return new GetAllFilteredSignPracticesUseCase((SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get());
+        }
+
+        GetSignPracticeFlowUseCase getSignPracticeFlowUseCase() {
+            return new GetSignPracticeFlowUseCase((SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get());
+        }
+
+        TranslateAndInterpretSignPracticeUseCase translateAndInterpretSignPracticeUseCase() {
+            return new TranslateAndInterpretSignPracticeUseCase((WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (LtsTranslationRepository) this.singletonCImpl.provideLtsTranslationRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        SyncPendingPersonaDataUseCase syncPendingPersonaDataUseCase() {
+            return new SyncPendingPersonaDataUseCase((EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get(), (PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+        }
+
+        UploadVideoUseCase uploadVideoUseCase() {
+            return new UploadVideoUseCase((VideoUploadRepository) this.singletonCImpl.provideVideoUploadRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+        }
+
+        private void initialize(final SavedStateHandle savedStateHandleParam, final ViewModelLifecycle viewModelLifecycleParam) {
+            this.appViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 0);
+            this.conversationListViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 1);
+            this.conversationSettingsViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 2);
+            this.conversationSharedViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 3);
+            this.conversationViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 4);
+            this.credentialViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 5);
+            this.documentScannerViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 6);
+            this.environmentSoundHistoryViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 7);
+            this.homeViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 8);
+            this.mainViewModelCurrentProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 9);
+            this.navigationViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 10);
+            this.networkUnavailableViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 11);
+            this.notificationListViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 12);
+            this.notificationViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 13);
+            this.onBoardingViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 14);
+            this.setUpViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 15);
+            this.signPracticeCreationViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 16);
+            this.signPracticeListViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 17);
+            this.signPracticeSessionViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 18);
+            this.splashScreenViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 19);
+            this.visionDetectorProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 21);
+            this.videoUploadViewModelProvider = new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, this.viewModelCImpl, 20);
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.HiltViewModelFactory.ViewModelFactoriesEntryPoint
+        public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
+            return LazyClassKeyMap.of(ImmutableMap.builderWithExpectedSize(21).put(AppViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.appViewModelProvider).put(ConversationListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.conversationListViewModelProvider).put(ConversationSettingsViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.conversationSettingsViewModelProvider).put(ConversationSharedViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.conversationSharedViewModelProvider).put(ConversationViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.conversationViewModelProvider).put(CredentialViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.credentialViewModelProvider).put(DocumentScannerViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.documentScannerViewModelProvider).put(EnvironmentSoundHistoryViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.environmentSoundHistoryViewModelProvider).put(HomeViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.homeViewModelProvider).put(MainViewModelCurrent_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.mainViewModelCurrentProvider).put(NavigationViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.navigationViewModelProvider).put(NetworkUnavailableViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.networkUnavailableViewModelProvider).put(NotificationListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.notificationListViewModelProvider).put(NotificationViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.notificationViewModelProvider).put(OnBoardingViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.onBoardingViewModelProvider).put(SetUpViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.setUpViewModelProvider).put(SignPracticeCreationViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.signPracticeCreationViewModelProvider).put(SignPracticeListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.signPracticeListViewModelProvider).put(SignPracticeSessionViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.signPracticeSessionViewModelProvider).put(SplashScreenViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.splashScreenViewModelProvider).put(VideoUploadViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, this.videoUploadViewModelProvider).build());
+        }
+
+        @Override // dagger.hilt.android.internal.lifecycle.HiltViewModelFactory.ViewModelFactoriesEntryPoint
+        public Map<Class<?>, Object> getHiltViewModelAssistedMap() {
+            return ImmutableMap.of();
+        }
+
+        private static final class SwitchingProvider<T> implements Provider<T> {
+            private final ActivityRetainedCImpl activityRetainedCImpl;
+            private final int id;
+            private final SingletonCImpl singletonCImpl;
+            private final ViewModelCImpl viewModelCImpl;
+
+            SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, ViewModelCImpl viewModelCImpl, int id) {
+                this.singletonCImpl = singletonCImpl;
+                this.activityRetainedCImpl = activityRetainedCImpl;
+                this.viewModelCImpl = viewModelCImpl;
+                this.id = id;
+            }
+
+            public T get() {
+                switch (this.id) {
+                    case 0:
+                        return (T) new AppViewModel((PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get(), this.viewModelCImpl.showShareAppDialogUseCase(), this.viewModelCImpl.sendSoundEventsUseCase(), (SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get(), this.viewModelCImpl.logOutAndClearMailIdUseCase(), (NetworkMonitor) this.singletonCImpl.provideNetworkMonitorProvider.get());
+                    case 1:
+                        return (T) new ConversationListViewModel(this.viewModelCImpl.getAllFilteredConversationsUseCase(), this.viewModelCImpl.setActiveConversationUseCase(), this.viewModelCImpl.deleteConversationsUseCase(), this.viewModelCImpl.insertAndSetActiveConversationUseCase());
+                    case 2:
+                        return (T) new ConversationSettingsViewModel((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get(), this.viewModelCImpl.resetUserPersonaDataUseCase(), this.viewModelCImpl.setConversationUserLanguageUseCase(), this.viewModelCImpl.setInterpretationModeUseCase(), this.viewModelCImpl.setInterpretationSpeedUseCase(), this.viewModelCImpl.toggleConversationSpeakerDetectionUseCase(), this.viewModelCImpl.setConversationTranscriptionFontSizeUseCase(), this.viewModelCImpl.saveConversationLanguageUseCase(), this.viewModelCImpl.resetSelectedVoiceUseCase(), this.viewModelCImpl.logRedirectActionUseCase(), this.viewModelCImpl.setEnvironmentRecognitionStateUseCase(), this.viewModelCImpl.getAvailableVoicesForLanguageUseCase(), (TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get());
+                    case 3:
+                        return (T) new ConversationSharedViewModel();
+                    case 4:
+                        return (T) new ConversationViewModel((ConversationSpeechRecognizerService) this.singletonCImpl.conversationSpeechRecognizerServiceProvider.get(), (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (TextToSpeechManager) this.singletonCImpl.textToSpeechManagerProvider.get(), (ShareIntentManager) this.singletonCImpl.provideShareIntentMangerProvider.get(), (ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (SuggestionUseCases) this.singletonCImpl.suggestionUseCasesProvider.get(), this.viewModelCImpl.interpretationUseCases(), this.viewModelCImpl.conversationManagementUseCases(), (SyncConversationUsageLimitsUseCase) this.singletonCImpl.syncConversationUsageLimitsUseCaseProvider.get(), this.viewModelCImpl.checkAndResetDailyLimitsUseCase(), this.viewModelCImpl.conversationSettingsUseCases(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), this.viewModelCImpl.textToSpeechUseCases());
+                    case 5:
+                        return (T) new CredentialViewModel(this.viewModelCImpl.fetchAndSaveMailIdUseCase());
+                    case 6:
+                        return (T) new DocumentScannerViewModel(this.viewModelCImpl.extractTextFromImageUseCase());
+                    case 7:
+                        return (T) new EnvironmentSoundHistoryViewModel((EnvironmentSoundHistoryRepository) this.singletonCImpl.provideEnvSoundHistoryRepositoryProvider.get());
+                    case 8:
+                        return (T) new HomeViewModel();
+                    case 9:
+                        return (T) new MainViewModelCurrent(this.viewModelCImpl.showShareAppDialogUseCase(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get(), this.viewModelCImpl.logOutAndClearMailIdUseCase());
+                    case 10:
+                        return (T) new NavigationViewModel((PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get());
+                    case 11:
+                        return (T) new NetworkUnavailableViewModel((NetworkMonitor) this.singletonCImpl.provideNetworkMonitorProvider.get(), (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get());
+                    case 12:
+                        return (T) new NotificationListViewModel(this.viewModelCImpl.getAllFilteredNotificationsUseCase(), this.viewModelCImpl.deleteNotificationsUseCase());
+                    case 13:
+                        return (T) new NotificationViewModel(this.viewModelCImpl.getNotificationFlowUseCase(), this.viewModelCImpl.submitNotificationActionUseCase(), this.viewModelCImpl.submitNotificationListActionUseCase(), (MediaPlayerManager) this.singletonCImpl.mediaPlayerManagerProvider.get(), this.viewModelCImpl.savedStateHandle);
+                    case 14:
+                        return (T) new OnBoardingViewModel((PersonaSurveyRepository) this.singletonCImpl.providePersonaSurveyRepositoryProvider.get(), this.viewModelCImpl.submitPersonaDataUseCase(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get());
+                    case 15:
+                        return (T) new SetUpViewModel(this.viewModelCImpl.loginAndSaveTokenUseCase(), (NotificationIntentManager) this.singletonCImpl.provideNotificationIntentMangerProvider.get(), this.viewModelCImpl.setEnvironmentRecognizerStateUseCase(), (EngagementRepository) this.singletonCImpl.provideEngagementRepositoryProvider.get());
+                    case 16:
+                        return (T) new SignPracticeCreationViewModel(this.viewModelCImpl.insertSignPracticeAndGetIdUseCase(), (SignPracticeRepository) this.singletonCImpl.provideSignPracticeRepositoryProvider.get());
+                    case 17:
+                        return (T) new SignPracticeListViewModel(this.viewModelCImpl.deleteSignPracticeUseCase(), this.viewModelCImpl.incrementSignPracticeOpenCountUseCase(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), this.viewModelCImpl.getAllFilteredSignPracticesUseCase());
+                    case 18:
+                        return (T) new SignPracticeSessionViewModel(this.viewModelCImpl.getSignPracticeFlowUseCase(), (MediaPlayerManager) this.singletonCImpl.mediaPlayerManagerProvider.get(), (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), this.viewModelCImpl.translateAndInterpretSignPracticeUseCase(), this.viewModelCImpl.savedStateHandle);
+                    case 19:
+                        return (T) new SplashScreenViewModel((SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), this.viewModelCImpl.syncPendingPersonaDataUseCase());
+                    case 20:
+                        return (T) new VideoUploadViewModel(this.viewModelCImpl.uploadVideoUseCase(), this.viewModelCImpl.visionDetectorProvider);
+                    case 21:
+                        return (T) new VisionDetector(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    default:
+                        throw new AssertionError(this.id);
+                }
+            }
+        }
+    }
+
+    private static final class ActivityRetainedCImpl extends MyApp_HiltComponents.ActivityRetainedC {
+        private final ActivityRetainedCImpl activityRetainedCImpl = this;
+        Provider<ActivityRetainedLifecycle> provideActivityRetainedLifecycleProvider;
+        private final SingletonCImpl singletonCImpl;
+
+        ActivityRetainedCImpl(SingletonCImpl singletonCImpl, SavedStateHandleHolder savedStateHandleHolderParam) {
+            this.singletonCImpl = singletonCImpl;
+            initialize(savedStateHandleHolderParam);
+        }
+
+        private void initialize(final SavedStateHandleHolder savedStateHandleHolderParam) {
+            this.provideActivityRetainedLifecycleProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, this.activityRetainedCImpl, 0));
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ActivityComponentManager.ActivityComponentBuilderEntryPoint
+        public ActivityComponentBuilder activityComponentBuilder() {
+            return new ActivityCBuilder(this.singletonCImpl, this.activityRetainedCImpl);
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ActivityRetainedComponentManager.ActivityRetainedLifecycleEntryPoint
+        public ActivityRetainedLifecycle getActivityRetainedLifecycle() {
+            return (ActivityRetainedLifecycle) this.provideActivityRetainedLifecycleProvider.get();
+        }
+
+        private static final class SwitchingProvider<T> implements Provider<T> {
+            private final ActivityRetainedCImpl activityRetainedCImpl;
+            private final int id;
+            private final SingletonCImpl singletonCImpl;
+
+            SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl, int id) {
+                this.singletonCImpl = singletonCImpl;
+                this.activityRetainedCImpl = activityRetainedCImpl;
+                this.id = id;
+            }
+
+            public T get() {
+                if (this.id == 0) {
+                    return (T) ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory.provideActivityRetainedLifecycle();
+                }
+                throw new AssertionError(this.id);
+            }
+        }
+    }
+
+    private static final class ServiceCImpl extends MyApp_HiltComponents.ServiceC {
+        private final ServiceCImpl serviceCImpl = this;
+        private final SingletonCImpl singletonCImpl;
+
+        ServiceCImpl(SingletonCImpl singletonCImpl, Service serviceParam) {
+            this.singletonCImpl = singletonCImpl;
+        }
+
+        @Override // com.deepvisiontech.letstalksigntranscriptionapp.current.notifications.data.services.PushNotificationService_GeneratedInjector
+        public void injectPushNotificationService(PushNotificationService pushNotificationService) {
+            injectPushNotificationService2(pushNotificationService);
+        }
+
+        private PushNotificationService injectPushNotificationService2(PushNotificationService instance) {
+            PushNotificationService_MembersInjector.injectNotificationRepository(instance, (NotificationRepository) this.singletonCImpl.provideNotificationRepositoryProvider.get());
+            PushNotificationService_MembersInjector.injectExternalScope(instance, (CoroutineScope) this.singletonCImpl.provideApplicationScopeProvider.get());
+            return instance;
+        }
+    }
+
+    private static final class SingletonCImpl extends MyApp_HiltComponents.SingletonC {
+        private final ApplicationContextModule applicationContextModule;
+        Provider<ApplicationLifeCycleObserver> applicationLifeCycleObserverProvider;
+        Provider<AudioOrchestrator> audioOrchestratorProvider;
+        Provider<ConversationSpeechRecognizerService> conversationSpeechRecognizerServiceProvider;
+        Provider<DeleteConversationInputSuggestionCategoryUseCase> deleteConversationInputSuggestionCategoryUseCaseProvider;
+        Provider<DeleteConversationInputSuggestionUseCase> deleteConversationInputSuggestionUseCaseProvider;
+        Provider<FetchConversationInputSuggestionsFromNetwork> fetchConversationInputSuggestionsFromNetworkProvider;
+        Provider<FetchCorrectionSuggestionUseCase> fetchCorrectionSuggestionUseCaseProvider;
+        Provider<GenerateAndInsertConversationSummaryUseCase> generateAndInsertConversationSummaryUseCaseProvider;
+        Provider<GetAllConversationInputSuggestionUseCase> getAllConversationInputSuggestionUseCaseProvider;
+        Provider<GetAllFilteredMessagesOfConversationUseCase> getAllFilteredMessagesOfConversationUseCaseProvider;
+        Provider<InsertConversationInputSuggestionUseCase> insertConversationInputSuggestionUseCaseProvider;
+        Provider<InterpretConversationUseCase> interpretConversationUseCaseProvider;
+        Provider<MediaPlayerManager> mediaPlayerManagerProvider;
+        Provider<Retrofit> provideAnalyticsAndResponseRetrofitProvider;
+        Provider<AnalyticsApi> provideAnalyticsApiProvider;
+        Provider<AnalyticsManager> provideAnalyticsManagerProvider;
+        Provider<AnalyticsRepository> provideAnalyticsRepositoryProvider;
+        Provider<LtsRoomDatabase> provideAppDatabaseProvider;
+        Provider<AppUsageRepository> provideAppUsageRepositoryProvider;
+        Provider<CoroutineScope> provideApplicationScopeProvider;
+        Provider<AuthApi> provideAuthApiServiceProvider;
+        Provider<AuthRepository> provideAuthRepositoryProvider;
+        Provider<ConversationDao> provideConversationDaoProvider;
+        Provider<ConversationInputSuggestionDao> provideConversationInputSuggestionDaoProvider;
+        Provider<ConversationMessageDao> provideConversationMessageDaoProvider;
+        Provider<ConversationMessageRepository> provideConversationMessageRepositoryProvider;
+        Provider<ConversationOcrApi> provideConversationOcrApiProvider;
+        Provider<ConversationRepository> provideConversationRepositoryProvider;
+        Provider<ConversationSessionRepository> provideConversationSessionRepositoryProvider;
+        Provider<ConversationSettingsRepository> provideConversationSettingsRepositoryProvider;
+        Provider<ConversationSuggestionsApi> provideConversationSuggestionApiProvider;
+        Provider<ConversationSuggestionRepository> provideConversationSuggestionRepositoryProvider;
+        Provider<ConversationSummaryApi> provideConversationSummaryApiProvider;
+        Provider<ConversationUsageApi> provideConversationUsageApiProvider;
+        Provider<ConversationUsageRepository> provideConversationUsageRepositoryProvider;
+        Provider<CredentialManager> provideCredentialManagerProvider;
+        Provider<CredentialRepository> provideCredentialRepositoryProvider;
+        Provider<EngagementRepository> provideEngagementRepositoryProvider;
+        Provider<EnvironmentSoundHistoryDao> provideEnvSoundHistoryDaoProvider;
+        Provider<EnvironmentSoundHistoryRepository> provideEnvSoundHistoryRepositoryProvider;
+        Provider<HttpLoggingInterceptor> provideLoggingInterceptorProvider;
+        Provider<Retrofit> provideLtsRetrofitProvider;
+        Provider<LtsTranslationRepository> provideLtsTranslationRepositoryProvider;
+        Provider<NetworkMonitor> provideNetworkMonitorProvider;
+        Provider<NotificationApi> provideNotificationApiProvider;
+        Provider<NotificationDao> provideNotificationDaoProvider;
+        Provider<NotificationIntentManager> provideNotificationIntentMangerProvider;
+        Provider<NotificationRepository> provideNotificationRepositoryProvider;
+        Provider<OkHttpClient> provideOkHttpClientProvider;
+        Provider<PersonaSurveyRepository> providePersonaSurveyRepositoryProvider;
+        Provider<SessionRepository> provideSessionRepositoryProvider;
+        Provider<SettingsRepository> provideSettingsRepositoryProvider;
+        Provider<ShareIntentManager> provideShareIntentMangerProvider;
+        Provider<SignPracticeApi> provideSignPracticeApiProvider;
+        Provider<SignPracticeDao> provideSignPracticeDaoProvider;
+        Provider<SignPracticeRepository> provideSignPracticeRepositoryProvider;
+        Provider<SpeechToTextApi> provideSpeechToTextApiProvider;
+        Provider<SpeechToTextRepository> provideSpeechToTextRepositoryProvider;
+        Provider<PersonaSurveyApi> provideUserPersonaApiProvider;
+        Provider<VideoApiService> provideVideoApiServiceProvider;
+        Provider<Retrofit> provideVideoRetrofitProvider;
+        Provider<VideoUploadRepository> provideVideoUploadRepositoryProvider;
+        Provider<LtsTranslationApi> providesLtsTranslationApiProvider;
+        Provider<EnvSoundRecognizerService> providesSoundRecognizerServiceProvider;
+        Provider<WebViewManager> providesWebViewManagerProvider;
+        Provider<RecognizeSpeechInterpretAndInsertMessageUseCase> recognizeSpeechInterpretAndInsertMessageUseCaseProvider;
+        Provider<SetConversationModeUseCase> setConversationModeUseCaseProvider;
+        Provider<SharedAudioEngine> sharedAudioEngineProvider;
+        private final SingletonCImpl singletonCImpl = this;
+        Provider<SpeechRecogMicrophoneStream> speechRecogMicrophoneStreamProvider;
+        Provider<SpeechRecognizerFactory> speechRecognizerFactoryProvider;
+        Provider<StopInterpretationAndTranscriptionUseCase> stopInterpretationAndTranscriptionUseCaseProvider;
+        Provider<SuggestionUseCases> suggestionUseCasesProvider;
+        Provider<SyncConversationUsageLimitsUseCase> syncConversationUsageLimitsUseCaseProvider;
+        Provider<TextToSpeechManager> textToSpeechManagerProvider;
+        Provider<TranslateInterpretAndSaveMessageUseCase> translateInterpretAndSaveMessageUseCaseProvider;
+        Provider<UpdateConversationUseCase> updateConversationUseCaseProvider;
+
+        SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
+            this.applicationContextModule = applicationContextModuleParam;
+            initialize(applicationContextModuleParam);
+            initialize2(applicationContextModuleParam);
+            initialize3(applicationContextModuleParam);
+            initialize4(applicationContextModuleParam);
+        }
+
+        ConnectivityManager connectivityManager() {
+            return NetworkDiModule_ProvideConnectivityManagerFactory.provideConnectivityManager(ApplicationContextModule_ProvideContextFactory.provideContext(this.applicationContextModule));
+        }
+
+        private void initialize(final ApplicationContextModule applicationContextModuleParam) {
+            this.provideAppUsageRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 1));
+            this.applicationLifeCycleObserverProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 0));
+            this.sharedAudioEngineProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 3));
+            this.speechRecogMicrophoneStreamProvider = new SwitchingProvider(this.singletonCImpl, 6);
+            this.provideLoggingInterceptorProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 11));
+            this.provideOkHttpClientProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 10));
+            this.provideLtsRetrofitProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 9));
+            this.provideSpeechToTextApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 8));
+            this.provideSpeechToTextRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 7));
+            this.provideSessionRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 12));
+            this.speechRecognizerFactoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 5));
+            this.provideConversationSettingsRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 13));
+            this.provideAnalyticsApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 16));
+            this.provideAnalyticsRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 15));
+            this.provideAnalyticsManagerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 14));
+            this.conversationSpeechRecognizerServiceProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 4));
+            this.providesSoundRecognizerServiceProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 17));
+            this.provideSettingsRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 18));
+            this.audioOrchestratorProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 2));
+            this.providesWebViewManagerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 19));
+            this.provideShareIntentMangerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 20));
+            this.provideNotificationIntentMangerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 21));
+            this.provideUserPersonaApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 23));
+            this.providePersonaSurveyRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 22));
+            this.provideEngagementRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 24));
+        }
+
+        private void initialize2(final ApplicationContextModule applicationContextModuleParam) {
+            this.provideAppDatabaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 27));
+            this.provideEnvSoundHistoryDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 26));
+            this.provideEnvSoundHistoryRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 25));
+            this.provideAuthApiServiceProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 29));
+            this.provideAuthRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 28));
+            this.provideCredentialManagerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 31));
+            this.provideCredentialRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 30));
+            this.provideNetworkMonitorProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 32));
+            this.provideConversationDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 34));
+            this.provideConversationRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 33));
+            this.provideConversationSessionRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 35));
+            this.textToSpeechManagerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 36));
+            this.provideConversationInputSuggestionDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 40));
+            this.provideConversationSuggestionApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 41));
+            this.provideConversationSuggestionRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 39));
+            this.fetchCorrectionSuggestionUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 38));
+            this.insertConversationInputSuggestionUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 42));
+            this.fetchConversationInputSuggestionsFromNetworkProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 43));
+            this.getAllConversationInputSuggestionUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 44));
+            this.deleteConversationInputSuggestionUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 45));
+            this.deleteConversationInputSuggestionCategoryUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 46));
+            this.suggestionUseCasesProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 37));
+            this.provideConversationMessageDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 49));
+            this.provideConversationSummaryApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 50));
+            this.provideConversationMessageRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 48));
+        }
+
+        private void initialize3(final ApplicationContextModule applicationContextModuleParam) {
+            this.recognizeSpeechInterpretAndInsertMessageUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 47));
+            this.interpretConversationUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 51));
+            this.provideConversationUsageApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 54));
+            this.provideConversationUsageRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 53));
+            this.providesLtsTranslationApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 56));
+            this.provideLtsTranslationRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 55));
+            this.translateInterpretAndSaveMessageUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 52));
+            this.stopInterpretationAndTranscriptionUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 57));
+            this.getAllFilteredMessagesOfConversationUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 58));
+            this.updateConversationUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 59));
+            this.setConversationModeUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 60));
+            this.generateAndInsertConversationSummaryUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 61));
+            this.syncConversationUsageLimitsUseCaseProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 62));
+            this.provideConversationOcrApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 63));
+            this.provideNotificationDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 65));
+            this.provideAnalyticsAndResponseRetrofitProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 67));
+            this.provideNotificationApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 66));
+            this.provideNotificationRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 64));
+            this.mediaPlayerManagerProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 68));
+            this.provideSignPracticeDaoProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 70));
+            this.provideSignPracticeApiProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 71));
+            this.provideSignPracticeRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 69));
+            this.provideVideoRetrofitProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 74));
+            this.provideVideoApiServiceProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 73));
+            this.provideVideoUploadRepositoryProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 72));
+        }
+
+        private void initialize4(final ApplicationContextModule applicationContextModuleParam) {
+            this.provideApplicationScopeProvider = DoubleCheck.provider((Provider) new SwitchingProvider(this.singletonCImpl, 75));
+        }
+
+        @Override // com.deepvisiontech.letstalksigntranscriptionapp.current.MyApp_GeneratedInjector
+        public void injectMyApp(MyApp myApp) {
+            injectMyApp2(myApp);
+        }
+
+        @Override // dagger.hilt.android.flags.FragmentGetContextFix.FragmentGetContextFixEntryPoint
+        public Set<Boolean> getDisableFragmentGetContextFix() {
+            return ImmutableSet.of();
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ActivityRetainedComponentManager.ActivityRetainedComponentBuilderEntryPoint
+        public ActivityRetainedComponentBuilder retainedComponentBuilder() {
+            return new ActivityRetainedCBuilder(this.singletonCImpl);
+        }
+
+        @Override // dagger.hilt.android.internal.managers.ServiceComponentManager.ServiceComponentBuilderEntryPoint
+        public ServiceComponentBuilder serviceComponentBuilder() {
+            return new ServiceCBuilder(this.singletonCImpl);
+        }
+
+        private MyApp injectMyApp2(MyApp instance) {
+            MyApp_MembersInjector.injectLifeCycleObserver(instance, (ApplicationLifeCycleObserver) this.applicationLifeCycleObserverProvider.get());
+            MyApp_MembersInjector.injectAudioOrchestrator(instance, (AudioOrchestrator) this.audioOrchestratorProvider.get());
+            return instance;
+        }
+
+        private static final class SwitchingProvider<T> implements Provider<T> {
+            private final int id;
+            private final SingletonCImpl singletonCImpl;
+
+            SwitchingProvider(SingletonCImpl singletonCImpl, int id) {
+                this.singletonCImpl = singletonCImpl;
+                this.id = id;
+            }
+
+            public T get() {
+                switch (this.id) {
+                    case 0:
+                        return (T) new ApplicationLifeCycleObserver((AppUsageRepository) this.singletonCImpl.provideAppUsageRepositoryProvider.get());
+                    case 1:
+                        return (T) AnalyticsModule_ProvideAppUsageRepositoryFactory.provideAppUsageRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 2:
+                        return (T) new AudioOrchestrator((SharedAudioEngine) this.singletonCImpl.sharedAudioEngineProvider.get(), (ConversationSpeechRecognizerService) this.singletonCImpl.conversationSpeechRecognizerServiceProvider.get(), (EnvSoundRecognizerService) this.singletonCImpl.providesSoundRecognizerServiceProvider.get(), (SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get());
+                    case 3:
+                        return (T) new SharedAudioEngine();
+                    case 4:
+                        return (T) new ConversationSpeechRecognizerService((SpeechRecognizerFactory) this.singletonCImpl.speechRecognizerFactoryProvider.get(), (ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher());
+                    case 5:
+                        return (T) new SpeechRecognizerFactory(this.singletonCImpl.speechRecogMicrophoneStreamProvider, (SpeechToTextRepository) this.singletonCImpl.provideSpeechToTextRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+                    case 6:
+                        return (T) new SpeechRecogMicrophoneStream((SharedAudioEngine) this.singletonCImpl.sharedAudioEngineProvider.get());
+                    case 7:
+                        return (T) SpeechToTextModule_ProvideSpeechToTextRepositoryFactory.provideSpeechToTextRepository((SpeechToTextApi) this.singletonCImpl.provideSpeechToTextApiProvider.get());
+                    case 8:
+                        return (T) SpeechToTextModule_ProvideSpeechToTextApiFactory.provideSpeechToTextApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 9:
+                        return (T) AppModule_ProvideLtsRetrofitFactory.provideLtsRetrofit((OkHttpClient) this.singletonCImpl.provideOkHttpClientProvider.get());
+                    case 10:
+                        return (T) AppModule_ProvideOkHttpClientFactory.provideOkHttpClient((HttpLoggingInterceptor) this.singletonCImpl.provideLoggingInterceptorProvider.get());
+                    case 11:
+                        return (T) AppModule_ProvideLoggingInterceptorFactory.provideLoggingInterceptor();
+                    case 12:
+                        return (T) SessionModule_ProvideSessionRepositoryFactory.provideSessionRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 13:
+                        return (T) ConversationModule_ProvideConversationSettingsRepositoryFactory.provideConversationSettingsRepository(AppModule_ProvideIoDispatcherFactory.provideIoDispatcher(), ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 14:
+                        return (T) AnalyticsModule_ProvideAnalyticsManagerFactory.provideAnalyticsManager((SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (AnalyticsRepository) this.singletonCImpl.provideAnalyticsRepositoryProvider.get());
+                    case 15:
+                        return (T) AnalyticsModule_ProvideAnalyticsRepositoryFactory.provideAnalyticsRepository((AnalyticsApi) this.singletonCImpl.provideAnalyticsApiProvider.get());
+                    case 16:
+                        return (T) AnalyticsModule_ProvideAnalyticsApiFactory.provideAnalyticsApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 17:
+                        return (T) SoundRecognizerModule_ProvidesSoundRecognizerServiceFactory.providesSoundRecognizerService(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule), (SharedAudioEngine) this.singletonCImpl.sharedAudioEngineProvider.get());
+                    case 18:
+                        return (T) AppModule_ProvideSettingsRepositoryFactory.provideSettingsRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 19:
+                        return (T) WebViewModule_ProvidesWebViewManagerFactory.providesWebViewManager(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule), AppModule_ProvideDefaultDispatcherFactory.provideDefaultDispatcher(), (SettingsRepository) this.singletonCImpl.provideSettingsRepositoryProvider.get());
+                    case 20:
+                        return (T) ShareIntentModule_ProvideShareIntentMangerFactory.provideShareIntentManger();
+                    case 21:
+                        return (T) ManagerModule_ProvideNotificationIntentMangerFactory.provideNotificationIntentManger();
+                    case 22:
+                        return (T) UserPersonaModule_ProvidePersonaSurveyRepositoryFactory.providePersonaSurveyRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule), (PersonaSurveyApi) this.singletonCImpl.provideUserPersonaApiProvider.get());
+                    case 23:
+                        return (T) UserPersonaModule_ProvideUserPersonaApiFactory.provideUserPersonaApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case FlexBuffers.FBT_VECTOR_FLOAT4 /* 24 */:
+                        return (T) EngagementModule_ProvideEngagementRepositoryFactory.provideEngagementRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 25:
+                        return (T) EnvSoundModule_ProvideEnvSoundHistoryRepositoryFactory.provideEnvSoundHistoryRepository((EnvironmentSoundHistoryDao) this.singletonCImpl.provideEnvSoundHistoryDaoProvider.get());
+                    case 26:
+                        return (T) EnvSoundModule_ProvideEnvSoundHistoryDaoFactory.provideEnvSoundHistoryDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case DescriptorProtos.FileOptions.JAVA_STRING_CHECK_UTF8_FIELD_NUMBER /* 27 */:
+                        return (T) AppModule_ProvideAppDatabaseFactory.provideAppDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 28:
+                        return (T) AuthModule_ProvideAuthRepositoryFactory.provideAuthRepository((AuthApi) this.singletonCImpl.provideAuthApiServiceProvider.get());
+                    case 29:
+                        return (T) AuthModule_ProvideAuthApiServiceFactory.provideAuthApiService((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case SignPracticeCreationViewModel.PRACTICE_NAME_MAX_CHAR_LIMIT /* 30 */:
+                        return (T) CredentialModule_ProvideCredentialRepositoryFactory.provideCredentialRepository((CredentialManager) this.singletonCImpl.provideCredentialManagerProvider.get());
+                    case DescriptorProtos.FileOptions.CC_ENABLE_ARENAS_FIELD_NUMBER /* 31 */:
+                        return (T) CredentialModule_ProvideCredentialManagerFactory.provideCredentialManager(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 32:
+                        return (T) NetworkDiModule_ProvideNetworkMonitorFactory.provideNetworkMonitor(this.singletonCImpl.connectivityManager());
+                    case 33:
+                        return (T) ConversationModule_ProvideConversationRepositoryFactory.provideConversationRepository((ConversationDao) this.singletonCImpl.provideConversationDaoProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher(), ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case DescriptorProtos.MethodOptions.IDEMPOTENCY_LEVEL_FIELD_NUMBER /* 34 */:
+                        return (T) ConversationModule_ProvideConversationDaoFactory.provideConversationDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case 35:
+                        return (T) ConversationModule_ProvideConversationSessionRepositoryFactory.provideConversationSessionRepository(AppModule_ProvideIoDispatcherFactory.provideIoDispatcher(), ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 36:
+                        return (T) new TextToSpeechManager(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case DescriptorProtos.FileOptions.CSHARP_NAMESPACE_FIELD_NUMBER /* 37 */:
+                        return (T) new SuggestionUseCases((FetchCorrectionSuggestionUseCase) this.singletonCImpl.fetchCorrectionSuggestionUseCaseProvider.get(), (InsertConversationInputSuggestionUseCase) this.singletonCImpl.insertConversationInputSuggestionUseCaseProvider.get(), (FetchConversationInputSuggestionsFromNetwork) this.singletonCImpl.fetchConversationInputSuggestionsFromNetworkProvider.get(), (GetAllConversationInputSuggestionUseCase) this.singletonCImpl.getAllConversationInputSuggestionUseCaseProvider.get(), (DeleteConversationInputSuggestionUseCase) this.singletonCImpl.deleteConversationInputSuggestionUseCaseProvider.get(), (DeleteConversationInputSuggestionCategoryUseCase) this.singletonCImpl.deleteConversationInputSuggestionCategoryUseCaseProvider.get());
+                    case 38:
+                        return (T) new FetchCorrectionSuggestionUseCase((SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+                    case DescriptorProtos.FileOptions.SWIFT_PREFIX_FIELD_NUMBER /* 39 */:
+                        return (T) ConversationModule_ProvideConversationSuggestionRepositoryFactory.provideConversationSuggestionRepository((ConversationInputSuggestionDao) this.singletonCImpl.provideConversationInputSuggestionDaoProvider.get(), (ConversationSuggestionsApi) this.singletonCImpl.provideConversationSuggestionApiProvider.get());
+                    case 40:
+                        return (T) ConversationModule_ProvideConversationInputSuggestionDaoFactory.provideConversationInputSuggestionDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case DescriptorProtos.FileOptions.PHP_NAMESPACE_FIELD_NUMBER /* 41 */:
+                        return (T) ConversationModule_ProvideConversationSuggestionApiFactory.provideConversationSuggestionApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case DescriptorProtos.FileOptions.PHP_GENERIC_SERVICES_FIELD_NUMBER /* 42 */:
+                        return (T) new InsertConversationInputSuggestionUseCase((ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+                    case 43:
+                        return (T) new FetchConversationInputSuggestionsFromNetwork((ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+                    case DescriptorProtos.FileOptions.PHP_METADATA_NAMESPACE_FIELD_NUMBER /* 44 */:
+                        return (T) new GetAllConversationInputSuggestionUseCase((ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get());
+                    case DescriptorProtos.FileOptions.RUBY_PACKAGE_FIELD_NUMBER /* 45 */:
+                        return (T) new DeleteConversationInputSuggestionUseCase((ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get());
+                    case 46:
+                        return (T) new DeleteConversationInputSuggestionCategoryUseCase((ConversationSuggestionRepository) this.singletonCImpl.provideConversationSuggestionRepositoryProvider.get());
+                    case 47:
+                        return (T) new RecognizeSpeechInterpretAndInsertMessageUseCase((ConversationSpeechRecognizerService) this.singletonCImpl.conversationSpeechRecognizerServiceProvider.get(), (ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get(), (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher());
+                    case 48:
+                        return (T) ConversationModule_ProvideConversationMessageRepositoryFactory.provideConversationMessageRepository((ConversationMessageDao) this.singletonCImpl.provideConversationMessageDaoProvider.get(), (ConversationSummaryApi) this.singletonCImpl.provideConversationSummaryApiProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher());
+                    case 49:
+                        return (T) ConversationModule_ProvideConversationMessageDaoFactory.provideConversationMessageDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case SwipeToRevealKt.SHORT_ANIMATION /* 50 */:
+                        return (T) ConversationModule_ProvideConversationSummaryApiFactory.provideConversationSummaryApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 51:
+                        return (T) new InterpretConversationUseCase((WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get());
+                    case 52:
+                        return (T) new TranslateInterpretAndSaveMessageUseCase((WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get(), (ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get(), (ConversationUsageRepository) this.singletonCImpl.provideConversationUsageRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (LtsTranslationRepository) this.singletonCImpl.provideLtsTranslationRepositoryProvider.get());
+                    case FastDoubleMath.DOUBLE_SIGNIFICAND_WIDTH /* 53 */:
+                        return (T) ConversationModule_ProvideConversationUsageRepositoryFactory.provideConversationUsageRepository(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule), (ConversationUsageApi) this.singletonCImpl.provideConversationUsageApiProvider.get());
+                    case 54:
+                        return (T) ConversationModule_ProvideConversationUsageApiFactory.provideConversationUsageApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 55:
+                        return (T) AppModule_ProvideLtsTranslationRepositoryFactory.provideLtsTranslationRepository((LtsTranslationApi) this.singletonCImpl.providesLtsTranslationApiProvider.get());
+                    case 56:
+                        return (T) AppModule_ProvidesLtsTranslationApiFactory.providesLtsTranslationApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 57:
+                        return (T) new StopInterpretationAndTranscriptionUseCase((ConversationSpeechRecognizerService) this.singletonCImpl.conversationSpeechRecognizerServiceProvider.get(), (WebViewManager) this.singletonCImpl.providesWebViewManagerProvider.get());
+                    case 58:
+                        return (T) new GetAllFilteredMessagesOfConversationUseCase((ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get());
+                    case 59:
+                        return (T) new UpdateConversationUseCase((ConversationRepository) this.singletonCImpl.provideConversationRepositoryProvider.get());
+                    case ReaderConfig.DEFAULT_SMALL_BUFFER_LEN /* 60 */:
+                        return (T) new SetConversationModeUseCase((ConversationSettingsRepository) this.singletonCImpl.provideConversationSettingsRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get());
+                    case 61:
+                        return (T) new GenerateAndInsertConversationSummaryUseCase((ConversationMessageRepository) this.singletonCImpl.provideConversationMessageRepositoryProvider.get(), (ConversationUsageRepository) this.singletonCImpl.provideConversationUsageRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get(), (AnalyticsManager) this.singletonCImpl.provideAnalyticsManagerProvider.get(), (LtsTranslationRepository) this.singletonCImpl.provideLtsTranslationRepositoryProvider.get());
+                    case 62:
+                        return (T) new SyncConversationUsageLimitsUseCase((ConversationUsageRepository) this.singletonCImpl.provideConversationUsageRepositoryProvider.get(), (SessionRepository) this.singletonCImpl.provideSessionRepositoryProvider.get());
+                    case 63:
+                        return (T) ConversationModule_ProvideConversationOcrApiFactory.provideConversationOcrApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 64:
+                        return (T) NotificationModule_ProvideNotificationRepositoryFactory.provideNotificationRepository((NotificationDao) this.singletonCImpl.provideNotificationDaoProvider.get(), (NotificationApi) this.singletonCImpl.provideNotificationApiProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher());
+                    case 65:
+                        return (T) NotificationModule_ProvideNotificationDaoFactory.provideNotificationDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case 66:
+                        return (T) NotificationModule_ProvideNotificationApiFactory.provideNotificationApi((Retrofit) this.singletonCImpl.provideAnalyticsAndResponseRetrofitProvider.get());
+                    case 67:
+                        return (T) AppModule_ProvideAnalyticsAndResponseRetrofitFactory.provideAnalyticsAndResponseRetrofit((OkHttpClient) this.singletonCImpl.provideOkHttpClientProvider.get());
+                    case 68:
+                        return (T) new MediaPlayerManager(ApplicationContextModule_ProvideContextFactory.provideContext(this.singletonCImpl.applicationContextModule));
+                    case 69:
+                        return (T) SignPracticeModule_ProvideSignPracticeRepositoryFactory.provideSignPracticeRepository((SignPracticeDao) this.singletonCImpl.provideSignPracticeDaoProvider.get(), (SignPracticeApi) this.singletonCImpl.provideSignPracticeApiProvider.get(), AppModule_ProvideIoDispatcherFactory.provideIoDispatcher());
+                    case 70:
+                        return (T) SignPracticeModule_ProvideSignPracticeDaoFactory.provideSignPracticeDao((LtsRoomDatabase) this.singletonCImpl.provideAppDatabaseProvider.get());
+                    case 71:
+                        return (T) SignPracticeModule_ProvideSignPracticeApiFactory.provideSignPracticeApi((Retrofit) this.singletonCImpl.provideLtsRetrofitProvider.get());
+                    case 72:
+                        return (T) VideoAnnotationModule_ProvideVideoUploadRepositoryFactory.provideVideoUploadRepository((VideoApiService) this.singletonCImpl.provideVideoApiServiceProvider.get());
+                    case 73:
+                        return (T) VideoAnnotationModule_ProvideVideoApiServiceFactory.provideVideoApiService((Retrofit) this.singletonCImpl.provideVideoRetrofitProvider.get());
+                    case 74:
+                        return (T) VideoAnnotationModule_ProvideVideoRetrofitFactory.provideVideoRetrofit((OkHttpClient) this.singletonCImpl.provideOkHttpClientProvider.get());
+                    case AnimationKt.FLASH /* 75 */:
+                        return (T) NotificationModule_ProvideApplicationScopeFactory.provideApplicationScope();
+                    default:
+                        throw new AssertionError(this.id);
+                }
+            }
+        }
+    }
+}

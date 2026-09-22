@@ -1,0 +1,28 @@
+# Binary APK files (>100MB prohibited by GitHub)
+*.apk
+*.idsig
+
+# Archive files except release package
+*.zip
+!mouna-chrome-extension.zip
+
+# Intermediate decompilation directories
+apktool_out/
+apktool_smali/
+dex_temp/
+extracted_splits/
+platform-tools/
+
+# Tool binaries
+tools/jadx/
+tools/*.jar
+tools/*.zip
+
+# Temporary test logs and screenshots
+current_screen*.png
+*.log
+
+# OS & Environment files
+.DS_Store
+Thumbs.db
+node_modules/

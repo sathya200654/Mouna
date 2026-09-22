@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "Mouna - Speech to Indian Sign Language",
+  "version": "1.0.0",
+  "description": "Real-time Speech and Audio to Indian Sign Language (ISL) 3D Avatar converter supporting 9 Indian languages.",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    },
+    "default_title": "Mouna - Speech to Sign Language"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; img-src 'self' data: blob:;"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabCapture"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "lib/three.min.js",
+        "lib/meshopt_decoder.js",
+        "lib/GLTFLoader.js",
+        "src/sign/sign-processor.js",
+        "src/sign/sign-mapper.js",
+        "src/sign/animation-queue.js",
+        "src/avatar/renderer.js",
+        "src/avatar/avatar-loader.js",
+        "src/avatar/animation-controller.js",
+        "src/audio/audio-capture.js",
+        "src/speech/speech-recognizer.js",
+        "content/overlay.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/overlay.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/models/arya-signs.glb",
+        "assets/icons/*",
+        "assets/images/*",
+        "lib/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
