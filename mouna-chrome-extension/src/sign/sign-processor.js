@@ -17,14 +17,14 @@ class SignProcessor {
   normalizeText(text) {
     if (!text || typeof text !== 'string') return [];
 
-    // Replace common symbols & contractions
+    // Replace common symbols & contractions, preserving all Unicode letters & marks (Indic scripts)
     let cleaned = text
       .trim()
       .replace(/[`’]/g, "'")
       .replace(/([!?]){2,}/g, '$1')
       .replace(/\.{2,}/g, '.')
       .replace(/\r?\n|\r/g, ' ')
-      .replace(/[^\w\s\d.'-]/gi, ' ')
+      .replace(/[^\p{L}\p{M}\p{N}\s.'-]/gu, ' ')
       .replace(/\s+/g, ' ');
 
     if (!cleaned) return [];
@@ -40,8 +40,8 @@ class SignProcessor {
         const numberWords = this.convertNumberToWords(word);
         resultWords.push(...numberWords);
       } else {
-        // Strip trailing punctuation from individual words
-        word = word.replace(/[.,!?:;]$/, '');
+        // Strip leading & trailing punctuation from individual words (including Indic danda)
+        word = word.replace(/^[.,!?:;।॥'"()\-]+|[.,!?:;।॥'"()\-]+$/gu, '');
         if (word.length > 0) {
           resultWords.push(word);
         }

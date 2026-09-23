@@ -65,7 +65,8 @@
         "assets/models/arya-signs.glb",
         "assets/icons/*",
         "assets/images/*",
-        "lib/*"
+        "lib/*",
+        "pages/*"
       ],
       "matches": ["<all_urls>"]
     }

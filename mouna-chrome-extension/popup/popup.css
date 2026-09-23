@@ -87,6 +87,24 @@ body {
   color: var(--text-muted);
 }
 
+.mic-setup-link {
+  font-size: 9px;
+  font-weight: 700;
+  color: #00E676;
+  text-decoration: none;
+  background: rgba(0, 230, 118, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  margin-left: 3px;
+  transition: all 0.15s ease;
+}
+
+.mic-setup-link:hover {
+  background: #00E676;
+  color: #0B0E17;
+}
+
 .status-dot {
   width: 6px;
   height: 6px;

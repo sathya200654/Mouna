@@ -97,6 +97,14 @@ class AnimationQueue {
   }
 
   /**
+   * Returns the number of items currently waiting in the queue.
+   * @returns {number}
+   */
+  get length() {
+    return this.queue.length;
+  }
+
+  /**
    * Clears all pending queued animations and stops playback.
    */
   clear() {
@@ -125,3 +133,8 @@ class AnimationQueue {
 if (typeof window !== 'undefined') {
   window.AnimationQueue = AnimationQueue;
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = AnimationQueue;
+}
+

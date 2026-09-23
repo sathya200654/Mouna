@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const words = signProcessor.normalizeText(text);
     if (!words || words.length === 0) return;
 
-    const signs = signMapper.mapSentenceToSigns(words, 'en');
+    const signs = signMapper.mapSentenceToSigns(words, 'auto');
     if (signs.length > 0) {
       animationQueue.enqueueBatch(signs);
       animationController.start();
@@ -143,40 +143,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     signText(transcript);
   };
 
+  // Mic permission setup link click
+  const micPermLink = document.getElementById('mic-perm-link');
+  if (micPermLink) {
+    micPermLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: chrome.runtime.getURL('pages/permission.html') });
+    });
+  }
+
   speechRecognizer.onError = (msg, errorType) => {
     console.warn('[Mouna Popup Speech Error]', msg, errorType);
     if (errorType === 'not-allowed') {
-      updateStatus('idle', 'Mic Permission Needed');
+      // In Chrome MV3, popups cannot directly prompt for getUserMedia.
+      // We rely on the active tab (where user allowed mic) or open permission tab.
+      console.log('[Mouna Popup] Using active tab audio/mic stream.');
+      updateStatus('listening', 'Listening via Tab');
     }
   };
-
-  // Request Microphone permission safely
-  async function requestMicrophoneAccess() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop());
-      return true;
-    } catch (err) {
-      console.warn('[Mouna Popup] Mic access not yet allowed:', err);
-      return false;
-    }
-  }
 
   async function startListening() {
     updateStatus('listening', 'Starting Audio Listen...');
     transcriptDisplay.textContent = 'Listening to laptop audio and speech...';
 
-    // 1. Request microphone access for laptop audio input
-    await requestMicrophoneAccess();
+    // 1. Check if extension has granted mic permission
+    chrome.storage.local.get(['micPermissionGranted'], (res) => {
+      if (!res.micPermissionGranted) {
+        // Try starting; if it throws or fails, open 1-click permission tab
+        try {
+          speechRecognizer.start();
+        } catch (e) {
+          chrome.tabs.create({ url: chrome.runtime.getURL('pages/permission.html') });
+        }
+      } else {
+        try {
+          speechRecognizer.start();
+        } catch (e) {}
+      }
+    });
 
-    // 2. Start speech recognizer (listens to laptop speakers / microphone with low latency)
-    try {
-      speechRecognizer.start();
-    } catch (e) {
-      console.warn('[Mouna Popup] Speech recognizer start:', e);
-    }
-
-    // 3. Attempt Tab Audio Capture (keeps sound playing through laptop speakers)
+    // 2. Tab Audio loopback capture
     try {
       await audioManager.startTabCapture({ loopbackToSpeakers: true });
     } catch (e) {

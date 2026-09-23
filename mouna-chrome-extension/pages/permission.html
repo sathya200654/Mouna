@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouna - Microphone Setup</title>
+  <style>
+    body {
+      background: #0B0E17;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #161B2A;
+      border: 1px solid rgba(0, 168, 150, 0.3);
+      border-radius: 16px;
+      padding: 36px 40px;
+      text-align: center;
+      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 12px 0;
+      color: #00E676;
+    }
+    p {
+      color: #94A3B8;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #028090, #00A896);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    .status {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #64748B;
+    }
+    .success {
+      color: #00E676 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🎙️</div>
+    <h1>Enable Microphone for Mouna</h1>
+    <p>Please click <strong>"Allow"</strong> when Chrome prompts you for microphone permission so Mouna can listen to audio and speech in real-time.</p>
+    <button id="grant-btn" class="btn">Allow Microphone Access</button>
+    <div id="status" class="status">Waiting for user interaction...</div>
+  </div>
+
+  <script src="permission.js"></script>
+</body>
+</html>

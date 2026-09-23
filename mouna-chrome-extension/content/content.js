@@ -110,6 +110,8 @@
 
   // Speech Recognition Callbacks
   const handleSpeechTranscript = (transcript, isFinal) => {
+    if (!transcript || !transcript.trim()) return;
+
     overlay.setTranscript(transcript, isFinal);
 
     // Forward transcript update to storage/popup
@@ -120,23 +122,33 @@
       });
     } catch (e) {}
 
-    // Progressive real-time speech tokenization
     const allWords = signProcessor.normalizeText(transcript);
-
-    if (allWords.length > lastProcessedWordCount) {
-      const newWords = allWords.slice(lastProcessedWordCount);
-      lastProcessedWordCount = allWords.length;
-
-      const newSigns = signMapper.mapSentenceToSigns(newWords, currentLanguage);
-      if (newSigns.length > 0) {
-        animationQueue.enqueueBatch(newSigns);
-        animationController.start();
-      }
-    }
+    if (!allWords || allWords.length === 0) return;
 
     if (isFinal) {
-      // Sentence complete, reset token offset for next phrase
+      // Finalized sentence: process any remaining un-signed words
+      const remainingWords = allWords.slice(lastProcessedWordCount);
       lastProcessedWordCount = 0;
+
+      if (remainingWords.length > 0) {
+        const newSigns = signMapper.mapSentenceToSigns(remainingWords, currentLanguage);
+        if (newSigns.length > 0) {
+          animationQueue.enqueueBatch(newSigns);
+          animationController.start();
+        }
+      }
+    } else {
+      // Real-time progressive stream: queue completed words immediately
+      if (allWords.length > lastProcessedWordCount + 1) {
+        const newWords = allWords.slice(lastProcessedWordCount, allWords.length - 1);
+        lastProcessedWordCount = allWords.length - 1;
+
+        const newSigns = signMapper.mapSentenceToSigns(newWords, currentLanguage);
+        if (newSigns.length > 0) {
+          animationQueue.enqueueBatch(newSigns);
+          animationController.start();
+        }
+      }
     }
   };
 
