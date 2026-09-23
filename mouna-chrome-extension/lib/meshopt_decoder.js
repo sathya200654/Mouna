@@ -21,21 +21,45 @@ var MeshoptDecoder = (function() {
 		};
 	}
 
-	var wasm = wasm_base;
+	var instance = null;
+	var supported = false;
 
-	if (WebAssembly.validate(detector)) {
-		wasm = wasm_simd;
-		console.log("Warning: meshopt_decoder is using experimental SIMD support");
-	}
+	var promise = (async function() {
+		try {
+			if (typeof WebAssembly !== 'object' || !WebAssembly.instantiate) {
+				return false;
+			}
+			let result = null;
 
-	var instance;
+			// 1. Try SIMD if detector validates
+			if (typeof WebAssembly.validate === 'function' && WebAssembly.validate(detector)) {
+				try {
+					result = await WebAssembly.instantiate(unpack(wasm_simd), {});
+				} catch (simdErr) {
+					// Fall back to base WebAssembly
+				}
+			}
 
-	var promise =
-		WebAssembly.instantiate(unpack(wasm), {})
-		.then(function(result) {
-			instance = result.instance;
-			instance.exports.__wasm_call_ctors();
-		});
+			// 2. Base WebAssembly fallback
+			if (!result) {
+				try {
+					result = await WebAssembly.instantiate(unpack(wasm_base), {});
+				} catch (baseErr) {
+					// Fall through to catch
+				}
+			}
+
+			if (result && result.instance) {
+				instance = result.instance;
+				instance.exports.__wasm_call_ctors();
+				supported = true;
+				return true;
+			}
+		} catch (e) {
+			console.warn('[Mouna MeshoptDecoder] WebAssembly restricted by environment CSP:', e.message || e);
+		}
+		return false;
+	})();
 
 	function unpack(data) {
 		var result = new Uint8Array(data.length);
@@ -94,17 +118,21 @@ var MeshoptDecoder = (function() {
 
 	return {
 		ready: promise,
-		supported: true,
+		get supported() { return supported; },
 		decodeVertexBuffer: function(target, count, size, source, filter) {
+			if (!instance) throw new Error('MeshoptDecoder is not supported in this environment');
 			decode(instance.exports.meshopt_decodeVertexBuffer, target, count, size, source, instance.exports[filters[filter]]);
 		},
 		decodeIndexBuffer: function(target, count, size, source) {
+			if (!instance) throw new Error('MeshoptDecoder is not supported in this environment');
 			decode(instance.exports.meshopt_decodeIndexBuffer, target, count, size, source);
 		},
 		decodeIndexSequence: function(target, count, size, source) {
+			if (!instance) throw new Error('MeshoptDecoder is not supported in this environment');
 			decode(instance.exports.meshopt_decodeIndexSequence, target, count, size, source);
 		},
 		decodeGltfBuffer: function(target, count, size, source, mode, filter) {
+			if (!instance) throw new Error('MeshoptDecoder is not supported in this environment');
 			decode(instance.exports[decoders[mode]], target, count, size, source, instance.exports[filters[filter]]);
 		}
 	};

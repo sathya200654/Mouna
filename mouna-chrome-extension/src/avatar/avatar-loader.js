@@ -32,15 +32,15 @@ class AvatarLoader {
       console.log('[Mouna AvatarLoader] Starting 3D model load from:', modelUrl);
       this.isLoading = true;
 
-      // 1. Wait for MeshoptDecoder WebAssembly initialization if present
+      // 1. Check MeshoptDecoder if present, but never let WebAssembly errors block loading
       if (typeof MeshoptDecoder !== 'undefined') {
-        if (MeshoptDecoder.ready && typeof MeshoptDecoder.ready.then === 'function') {
-          console.log('[Mouna AvatarLoader] Awaiting MeshoptDecoder WebAssembly ready...');
-          await MeshoptDecoder.ready;
-          console.log('[Mouna AvatarLoader] MeshoptDecoder ready.');
+        try {
+          if (MeshoptDecoder.ready && typeof MeshoptDecoder.ready.then === 'function') {
+            await MeshoptDecoder.ready;
+          }
+        } catch (wasmErr) {
+          console.warn('[Mouna AvatarLoader] MeshoptDecoder WebAssembly not active (environment CSP):', wasmErr.message || wasmErr);
         }
-      } else {
-        console.warn('[Mouna AvatarLoader] MeshoptDecoder is not defined in global scope.');
       }
 
       // 2. Initialize Three.js GLTFLoader
@@ -49,7 +49,7 @@ class AvatarLoader {
       }
 
       const loader = new THREE.GLTFLoader();
-      if (typeof MeshoptDecoder !== 'undefined') {
+      if (typeof MeshoptDecoder !== 'undefined' && MeshoptDecoder.supported) {
         loader.setMeshoptDecoder(MeshoptDecoder);
       }
 
